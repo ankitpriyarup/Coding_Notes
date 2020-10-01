@@ -607,6 +607,34 @@ public:
         return st.top();
     }
 };
+
+// Construct BST from sorted linked list
+// O(NlogN) solution
+ListNode* findMiddle(ListNode* head)
+{
+    ListNode *prev = NULL, *slow = head, *fast = head;
+    while (slow && fast && fast->next)
+    {
+        prev = slow;
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    if (prev) prev->next = NULL;
+    return slow;
+}
+TreeNode* sortedListToBST(ListNode* head)
+{
+    if (!head) return NULL;
+
+    ListNode *mid = findMiddle(head);
+    TreeNode *root = new TreeNode(mid->val);
+    if (head == mid) return root;
+    root->left = sortedListToBST(head);
+    root->right = sortedListToBST(mid->next);
+    return root;
+}
+
+// O(N) solution: Form array out of linked list or best use something like Skip List
 ​
 // Construct BST from preorder
 TreeNode* construct(vector<int> &preorder, int l, int r)
