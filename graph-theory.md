@@ -679,6 +679,26 @@ TreeNode* recoverFromPreorder(string S)
 }
 ```
 
+### [Binary Tree Longest Consecutive Sequence](https://www.lintcode.com/problem/binary-tree-longest-consecutive-sequence/description)
+```c++
+unordered_map<TreeNode*, int> dp;
+void solve(TreeNode* root, TreeNode* par = NULL)
+{
+    if (!root) return;
+    dp[root] = (par && root->val == par->val+1) ? dp[par]+1 : 1;
+    solve(root->left, root);
+    solve(root->right, root);
+}
+int longestConsecutive(TreeNode* root)
+{
+    dp.clear();
+    solve(root);
+    int res = 0;
+    for (auto &x : dp) res = max(res, x.second);
+    return res;
+}
+```
+
 ### [Flatten BST to Linked List](https://leetcode.com/problems/flatten-binary-tree-to-linked-list/)
 
 ```cpp
@@ -1680,6 +1700,155 @@ public:
         return iter;
     }
 };
+```
+
+### Bidirectional BFS
+- [Word Ladder](https://leetcode.com/problems/word-ladder/)
+```c++
+// Slow normal BFS
+int ladderLength(string beginWord, string endWord, vector<string>& wordList)
+{
+    int m = beginWord.size();   // since all words are of same length
+    unordered_map<string, vector<string>> preprocess;
+    for (auto x : wordList)
+        for (int i = 0; i < m; ++i)
+            preprocess[x.substr(0, i) + '*' + x.substr(i+1)].push_back(x);
+
+    queue<pair<string, int>> q;
+    q.push({beginWord, 1});
+    unordered_set<string> vis;  // vis to make sure we dont repeat same word
+    vis.insert(beginWord);
+    while (!q.empty())
+    {
+        auto cur = q.front(); q.pop();
+        if (cur.first == endWord) return cur.second;
+        for (int i = 0; i < m; ++i)
+        {
+            string tmp = cur.first.substr(0, i) + '*' + cur.first.substr(i+1);
+            for (auto &nxt : preprocess[tmp])
+            {
+                if (vis.find(nxt) == vis.end())
+                {
+                    vis.insert(nxt);
+                    q.push({nxt, cur.second+1});
+                }
+            }
+        }
+    }
+    return 0;
+}
+// Further optimization Bi directional BFS
+int ladderLength(string beginWord, string endWord, vector<string>& wordList)
+{
+    unordered_set<string_view> rec(wordList.begin(), wordList.end());
+    if (rec.find(endWord) == rec.end()) return 0;
+
+    unordered_set<string_view> s1{beginWord}, s2{endWord};
+    rec.erase(beginWord); rec.erase(endWord);
+
+    int res = 1;
+    while (!s1.empty() && !s2.empty())
+    {
+        /* make sure we always expand the smaller side, thus 
+            reduce the overall size of the 2 predecessor tree */
+        if (s1.size() > s2.size()) swap(s1, s2);
+
+        unordered_set<string_view> tmp;
+        for (const auto word : s1)
+        {
+            string wordCopy = word.data();
+            for (auto &ch : wordCopy)
+            {
+                char orig = ch;
+                for (ch = 'a'; ch <= 'z'; ++ch)
+                {
+                    if (s2.find(wordCopy) != s2.end()) return res+1;
+                    if (rec.find(wordCopy) == rec.end()) continue;
+
+                    const auto it = rec.find(wordCopy);
+                    tmp.insert(*it); rec.erase(*it);
+                }
+                ch = orig;
+            }
+        }
+        s1 = tmp;
+        ++res;
+    }
+    return 0;
+}
+```
+
+### [Open the lock](https://leetcode.com/problems/open-the-lock/)
+```c++
+int openLock(vector<string>& deadends, string target)
+{
+    unordered_set<string> rec(deadends.begin(), deadends.end()), vis;
+
+    queue<string> q;
+    q.push("0000");
+    int cnt = 0;
+    while (!q.empty())
+    {
+        int sz = q.size();
+        while (sz--)
+        {
+            string u = q.front(); q.pop();
+            if (rec.find(u) != rec.end() || vis.find(u) != vis.end()) continue;
+            if (u == target) return cnt;
+            vis.insert(u);
+
+            for (auto &ch : u)
+            {
+                char orig = ch;
+                for (const int dir : {-1, 1})
+                {
+                    ch = (((orig-'0')+dir+10) % 10) + '0';
+                    q.push(u);
+                }
+                ch = orig;
+            }
+        }
+        cnt++;
+    }
+    return -1;        
+}
+
+// Bi directional BFS Optimization
+int openLock(vector<string>& deadends, string target)
+{
+    unordered_set<string> rec(deadends.begin(), deadends.end()), vis;
+    queue<string> q1, q2;
+    unordered_set<string> r1, r2;
+    q1.push("0000"); q2.push(target); r1.insert("0000"); r2.insert(target);
+
+    int cnt = 0;
+    while (!q1.empty() && !q2.empty())
+    {
+        if (q1.size() > q2.size()) swap(q1, q2), swap(r1, r2);
+        int sz = q1.size();
+        while (sz--)
+        {
+            string u = q1.front(); q1.pop();
+            if (rec.find(u) != rec.end() || vis.find(u) != vis.end()) continue;
+            if (r2.find(u) != r2.end()) return cnt;
+            vis.insert(u);
+
+            for (auto &ch : u)
+            {
+                char orig = ch;
+                for (const int dir : {-1, 1})
+                {
+                    ch = (((orig-'0')+dir+10) % 10) + '0';
+                    q1.push(u);
+                    r1.insert(u);
+                }
+                ch = orig;
+            }
+        }
+        cnt++;
+    }
+    return -1;
+}
 ```
 
 [https://codeforces.com/problemset/problem/1294/F](https://codeforces.com/problemset/problem/1294/F)  

@@ -770,6 +770,34 @@ int Solution::paint(int A, int B, vector<int> &C)
 }
 ```
 
+### [Minimize Max Distance to Gas Station](https://www.lintcode.com/problem/minimize-max-distance-to-gas-station/description)
+```c++
+double minmaxGasDist(vector<int> &stations, int k)
+{
+    const double EPS = 1e-6;
+    auto check = [&](double x)
+    {
+        int cnt = 0;
+        for (int i = 1; i < stations.size(); ++i)
+        {
+            cnt += ceil((double)(stations[i] - stations[i-1]) / x) - 1;
+            if (cnt > k) return false;
+        }
+        return (cnt <= k);
+    };
+    
+    double l = 0, r = EPS;
+    while (!check(r)) r *= 2;
+    while (l + EPS < r)
+    {
+        double mid = (l + r)/2;
+        if (check(mid)) r = mid;
+        else l = mid;
+    }
+    return r;
+}
+```
+
 ## Codeforces
 
 * [Maximum Median](https://codeforces.com/contest/1201/problem/C): [https://codeforces.com/contest/1201/submission/76923324](https://codeforces.com/contest/1201/submission/76923324)

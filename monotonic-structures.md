@@ -247,39 +247,50 @@ int main()
 {% endtab %}
 {% endtabs %}
 
-[https://leetcode.com/problems/basic-calculator-ii/](https://leetcode.com/problems/basic-calculator-ii/)
+### Basic Calculator
+- https://leetcode.com/problems/basic-calculator/
+- https://leetcode.com/problems/basic-calculator-ii/
+- https://www.lintcode.com/problem/basic-calculator-iii/description
 
 ```cpp
-class Solution {
-public:
-    int calculate(string s)
+// Other 2 variants can be solved easily by commenting some parts from this code
+// Variant - III (+, -, *, /, (, ), empty_spaces and non-negative_numbers)
+int calculate(string s)
+{
+    int num = 0, curRes = 0, res = 0;
+    char op = '+';
+    for (int i = 0; i < s.size(); ++i)
     {
-        stack<int> st;
-        long long tmp = 0;
-        char op = '+';
-        for (int i = 0; i < s.size(); ++i)
+        char ch = s[i];
+        if (ch >= '0' && ch <= '9') num = num*10 + (ch-'0');
+        else if (ch == '(')
         {
-            if (isdigit(s[i])) tmp = 10*tmp + s[i]-'0';
-            if ((!isdigit(s[i]) && !isspace(s[i])) || i == s.size()-1)
-            {                
-                if (op == '+') st.push(tmp);
-                else if (op == '-') st.push(-tmp);
-                else
-                {
-                    int num = st.top(); st.pop();
-                    if (op == '*') num *= tmp;
-                    else num /= tmp;
-                    st.push(num);
-                }
-                op = s[i];
-                tmp = 0;
+            int j = i, cnt = 0;
+            while (i < s.size())
+            {
+                if (s[i] == '(') ++cnt;
+                if (s[i] == ')') --cnt;
+                if (cnt == 0) break;
+                ++i;
             }
+            num = calculate(s.substr(j+1, i-j-1));
         }
-        int res = 0;
-        while (!st.empty()) { res += st.top(); st.pop(); }
-        return res;
+        if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || i == s.size()-1)
+        {
+            switch (op)
+            {
+                case '+': curRes += num; break;
+                case '-': curRes -= num; break;
+                case '*': curRes *= num; break;
+                case '/': curRes /= num; break;
+            }
+            if (ch == '+' || ch == '-' || i == s.size()-1)
+                res += curRes, curRes = 0;
+            op = ch, num = 0;
+        }
     }
-};
+    return res;
+}
 ```
 
 ## Implementations

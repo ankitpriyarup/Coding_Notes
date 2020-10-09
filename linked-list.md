@@ -377,6 +377,40 @@ ListNode* Solution::mergeKLists(vector<ListNode*> &A)
 // Conclusion: this one is better but if there are many duplicacy present 1st one is better
 ```
 
+### [Insert Into Cyclic Sorted List](https://www.lintcode.com/problem/insert-into-a-cyclic-sorted-list/description)
+```c++
+ListNode * insert(ListNode *head, int x)
+{
+    if (!head)
+    {
+        ListNode *node = new ListNode(x);
+        node->next = node;
+        return node;
+    }
+    
+    ListNode *cur = head, *maxNode = head;
+    bool inserted = false;
+    while(true)
+    {
+        if (cur->next->val < cur->val) maxNode = cur;
+        if (cur->next->val >= x && cur->val <= x)
+        {
+            ListNode *node = new ListNode(x, cur->next);
+            cur->next = node;
+            inserted = true;
+            break;
+        }
+        
+        cur = cur->next;
+        if (cur == head) break;
+    }
+    
+    // Turning point from max to min
+    if (!inserted) maxNode->next = new ListNode(x, maxNode->next);
+    return head;
+}
+```
+
 ### Sort Linked List
 
 ```cpp

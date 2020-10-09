@@ -517,6 +517,61 @@ public:
 };
 ```
 
+### Read N Characters Given Read4
+The API: int read4(char *buf) reads 4 characters at a time from a file.
+The return value is the actual number of characters read. For example, it returns 3 if there is only 3 characters left in the file.
+By using the read4 API, implement the function int read(char *buf, int n) that reads n characters from the file.
+Note: The read function will only be called once for each test case.
+```c++
+int read(char *buf, int n)
+{
+    int index = 0;
+    char r4[4];
+    while (index < n)
+    {
+        int c = read4(r4);
+        for (int i = 0; i < c && index < n; ++i)
+            buf[index++] = r4[i];
+        if (c < 4) break;
+    }
+    return index;
+}
+```
+
+### Read N Characters Given Read4 - Call Multiple Times
+```c++
+/* Previously it was called only once so:
+    "filetestbuffer"
+    read(6)
+    read(5)
+
+Gives output: [6, buf = "filete"] [5, buf = "buffe"]
+which is incorrect, now we want output as: [6, buf = "filete"] [5, buf = "stbuf"] */
+
+queue<char> q;
+int read(char *buf, int n)
+{
+    int index = 0;
+    while (!q.empty() && index < n)
+    {
+        buf[index++] = q.front();
+        q.pop();
+    }
+    if (index == n) return n;
+    char r4[4];
+    while (index < n)
+    {
+        int c = read4(r4);
+        int i = 0;
+        for (; i < c && index < n; ++i)
+            buf[index++] = r4[i];
+        while (i < c) q.push(r4[i++]);
+        if (c < 4) break;
+    }
+    return index;
+}
+```
+
 ### [Encode and Decode Strings](https://www.lintcode.com/en/old/problem/encode-and-decode-strings/#:~:text=Encode%20and%20Decode%20Strings,-Description&text=Design%20an%20algorithm%20to%20encode,the%20original%20list%20of%20strings.)
 
 ```cpp

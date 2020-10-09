@@ -1497,7 +1497,31 @@ int longestValidParentheses(string s)
     }
     return ans;
 }
+```
 
+### [Minimum Swaps To Make Sequences Increasing](https://leetcode.com/problems/minimum-swaps-to-make-sequences-increasing/)
+```c++
+vector<vector<int>> dp;
+int solve(vector<int> &A, vector<int> &B, int cur = 0, bool rev = false)
+{
+    if (cur == A.size()) return 0;
+    if (dp[cur][rev] != -1) return dp[cur][rev];
+    
+    int p1 = (cur == 0) ? INT_MIN : A[cur-1], p2 = A[cur];
+    int q1 = (cur == 0) ? INT_MIN : B[cur-1], q2 = B[cur];
+    if (rev) swap(p1, q1);
+    
+    int res = INT_MAX;
+    if (p1 < p2 && q1 < q2) res = min(res, solve(A, B, cur+1, false));
+    if (p1 < q2 && q1 < p2) res = min(res, 1+solve(A, B, cur+1, true));
+
+    return dp[cur][rev] = res;
+}
+int minSwap(vector<int>& A, vector<int>& B)
+{
+    dp = vector<vector<int>>(A.size(), vector<int>(2, -1));
+    return solve(A, B);
+}
 ```
 
 ### Word Break
@@ -1740,6 +1764,73 @@ int maxProfit(vector<int>& prices, int fee)
 }
 ```
 
+### House Robber
+- https://leetcode.com/problems/house-robber/
+- https://leetcode.com/problems/house-robber-ii/
+- https://leetcode.com/problems/house-robber-iii/
+```c++
+// Variant - I (No adjacent house to rob allowed)
+class Solution {
+public:
+    vector<int> dp;
+    int solve(vector<int> &nums, int cur = 0)
+    {
+        if (cur >= nums.size()) return 0;
+        if (dp[cur] != -1) return dp[cur];
+        return dp[cur] = max(solve(nums, cur+1), nums[cur] + solve(nums, cur+2));
+    }
+    int rob(vector<int>& nums)
+    {
+        dp = vector<int> (nums.size(), -1);
+        return solve(nums);
+    }
+};
+
+// Variant - II (Array is cyclic)
+class Solution {
+public:
+    vector<int> dp;
+    int solve(vector<int> &nums, int l, const int r)
+    {
+        if (l >= r) return 0;
+        if (dp[l] != -1) return dp[l];
+        return dp[l] = max(solve(nums, l+1, r), nums[l] + solve(nums, l+2, r));
+    }
+    int rob(vector<int>& nums)
+    {
+        if (nums.size() == 1) return nums[0];
+        if (nums.size() == 2) return max(nums[0], nums[1]);
+        dp = vector<int> (nums.size(), -1);
+        int x = solve(nums, 0, nums.size()-1);
+        dp = vector<int> (nums.size(), -1);
+        int y = solve(nums, 1, nums.size());
+        return max(x, y);
+    }
+};
+
+// Variant - III (Now it's a binary tree)
+class Solution {
+public:
+    unordered_map<TreeNode*, int> dp;
+    int solve(TreeNode* root)
+    {
+        if (!root) return 0;
+        if (dp.find(root) != dp.end()) return dp[root];
+        
+        int res = root->val;
+        if (root->left) res += solve(root->left->left) + solve(root->left->right);
+        if (root->right) res += solve(root->right->left) + solve(root->right->right);
+        
+        res = max(res, solve(root->left) + solve(root->right));
+        return dp[root] = res;
+    }
+    int rob(TreeNode* root)
+    {
+        return solve(root);
+    }
+};
+```
+
 ### Weighted Job Scheduling Problem
 
 Given jobs along with their weights we need to choose such that we get max weight out of it.
@@ -1824,6 +1915,42 @@ bool isMatch(string s, string p)
     return dp[m][n];
 }
 
+```
+
+### [Different Ways to Add Paranthesis](https://leetcode.com/problems/different-ways-to-add-parentheses/)
+```c++
+unordered_map<string, vector<int>> dp;
+vector<int> solve(string input)
+{
+    if (dp.find(input) != dp.end()) return dp[input];
+
+    vector<int> res;
+    for (int i = 0; i < input.size(); ++i)
+    {
+        char ch = input[i];
+        if (ch == '+' || ch == '-' || ch == '*')
+        {
+            for (const int a : diffWaysToCompute(input.substr(0, i)))
+            {
+                for (const int b : diffWaysToCompute(input.substr(i+1)))
+                {
+                    if (ch == '+') res.push_back(a + b);
+                    else if (ch == '-') res.push_back(a - b);
+                    else if (ch == '*') res.push_back(a * b);
+                }
+            }       
+        }
+    }
+    // if input string contains only number
+    if (res.empty()) res.push_back(stoi(input));
+
+    return dp[input] = res;
+}
+vector<int> diffWaysToCompute(string input)
+{
+    dp.clear();
+    return solve(input);
+}
 ```
 
 ### Travelling Salesman Problem
