@@ -632,54 +632,47 @@ public:
 
 ```cpp
 // Brute force O(MN)
-class Solution {
-public:
-    int strStr(string haystack, string needle) {
-        for (int i = 0; ; ++i)
-        {
-            for (int j = 0; ; ++j)
-            {
-                if (j == needle.size()) return i;
-                if (i + j == haystack.size()) return -1;
-                if (needle[j] != haystack[i+j]) break;
-            }
-        }
-    }
-};
-
-// KMP
 int strStr(string haystack, string needle)
 {
-    int nSize = needle.size(), hSize = haystack.size();
-    if (nSize == 0) return 0;
-    vector<int> table(nSize);
-    
-    // building table
-    for (int i = 1, j = 0; i < nSize-1;)
+    if (needle.size() == 0) return 0;
+    for (int i = 0, j = 0; i+j < haystack.size(); ++i)
     {
-        if (needle[i] != needle[j])
+        for (j = 0; j < needle.size(); ++j)
         {
-            if (j > 0) j = table[j-1];
-            else ++i;
-        }
-        else table[i] = j+1, ++i, ++j;
-    }
-    
-    // matching
-    for (int i = 0, matchPos = 0; i < hSize;)
-    {
-        if (haystack[i] == needle[matchPos])
-        {
-            if (matchPos == nSize-1) return (i - (nSize - 1));
-            else ++i, ++matchPos;
-        }
-        else
-        {
-            if (matchPos == 0) ++i;
-            else matchPos = table[matchPos - 1];
+            if (needle[j] != haystack[i+j]) break;
+            if (j == needle.size()-1) return i;
         }
     }
-	return -1;
+    return -1;
+}
+
+// KMP Algorithm
+// https://youtu.be/4jY57Ehc14Y
+// lps[i] is length of longest proper prefix of str[0..i] which is also suffix of str[0..i]
+int strStr(string haystack, string needle)
+{
+    if (needle.size() == 0) return 0;
+
+    vector<int> lps(needle.size());
+    lps[0] = 0;
+    for (int i = 1, j = 0; i < needle.size(); )
+    {
+        if (needle[i] == needle[j]) lps[i++] = ++j;
+        else if (j != 0) j = lps[j-1];      // Consider this example aaacaaaa
+        else lps[i++] = 0;
+    }
+
+    for (int i = 0, j = 0; i < haystack.size(); )
+    {
+        if (needle[j] == haystack[i+j]) ++j;
+        if (j == needle.size()) return i;
+        else if (i < haystack.size() && needle[j] != haystack[i+j])
+        {
+            if (j == 0) ++i;
+            else i+=(j-lps[j-1]), j=lps[j-1];
+        }
+    }
+    return -1;
 }
 ```
 
@@ -700,7 +693,7 @@ If we iterate over words and perform pattern matching complexity will be O\(nk +
 
 ```cpp
 // N^2 version
-vector<int> z_func_trivial(string s)
+vector<int> zFuncTrivial(string s)
 {
     int n = s.size();
     vector<int> z(n, 0);
@@ -709,11 +702,11 @@ vector<int> z_func_trivial(string s)
     return z;
 }
 
-vector<int> z_func(string s)
+vector<int> zFunc(string s)
 {
     int n = s.size();
     vector<int> z(n, 0);
-    for (int i = 1, l = 0, r = 0; i < z; ++i)
+    for (int i = 1, l = 0, r = 0; i < n; ++i)
     {
         if (i <= r) z[i] = min(r-i+1, z[i-l]);
         while (i + z[i] < n && s[z[i]] == s[i + z[i]]) ++z[i];
@@ -801,6 +794,73 @@ z   00000300200300
 take the index with z value = pattern size subtract index
 by (pattern size + 1) that's the answer
 O(M + N) Time
+```
+
+### Repeated String Match(https://leetcode.com/problems/repeated-string-match/)
+```c++
+// Naive way - O(a*b) and linear space
+int repeatedStringMatch(string a, string b)
+{
+    for (int i = 0; i < a.size(); ++i)
+    {
+        if (a[i] == b[0])
+        {
+            int cnt = 1, j = 0, startInd = i;
+            while (j < b.size() && a[startInd] == b[j])
+            {
+                ++j, ++startInd;
+                if (startInd >= a.size() && j < b.size()) startInd %= a.size(), cnt++;
+            }
+            if (j == b.size()) return cnt;
+        }
+    }
+    return -1;
+}
+
+// Laughingly this works way faster than above
+int repeatedStringMatch(string a, string b)
+{
+    string tmp = a;
+    int maxCnt = b.size()/a.size() + 2;
+    for (int i = 1; i <= maxCnt; ++i)
+    {
+        if (a.find(b) != string::npos) return i;
+        a += tmp;
+    }
+    return -1;
+}
+
+// KMP linear time
+int repeatedStringMatch(string a, string b)
+{
+    if (b.size() == 0) return 0;
+    
+    vector<int> lps(b.size());
+    lps[0] = 0;
+    for (int i = 1, j = 0; i < b.size(); )
+    {
+        if (b[i] == b[j]) lps[i++] = ++j;
+        else if (j != 0) j = lps[j-1];
+        else lps[i++] = 0;
+    }
+
+    for (int i = 0, j = 0; i < a.size(); )
+    {
+        if (b[j] == a[(i+j)%a.size()]) ++j;
+        if (j == b.size())
+        {
+            if ((i+j)%a.size()) return (i+j)/a.size()+1;
+            return (i+j)/a.size();
+        }
+        else if (i < a.size() && b[j] != a[(i+j)%a.size()])
+        {
+            if (j == 0) ++i;
+            else i+=(j-lps[j-1]), j=lps[j-1];
+        }
+    }
+
+    return -1;
+}
 ```
 
 Other Problems:  

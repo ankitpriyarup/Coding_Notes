@@ -382,6 +382,7 @@ public:
 * Sort numbers find median, we can maintain sorted array while addNum it will take O\(logN\) time in lower\_bound and worst case all numbers have to be shifted so O\(NlogN\)
 
 ```cpp
+// Avg case logN, but worst case linear
 vector<int> arr;
 int sz = 0;
 MedianFinder() { }
@@ -394,6 +395,25 @@ void addNum(int num)
 double findMedian()
 {
     return sz&1 ? arr[sz/2] : (arr[sz/2 + 1] + arr[sz/2])/2.0;
+}
+
+// O(logN) using 2 heaps
+priority_queue<int> l;
+priority_queue<int, vector<int>, greater<int>> r;
+void addNum(int num)
+{
+    l.push(num);
+    r.push(l.top());
+    l.pop();
+    if (l.size() < r.size())
+    {
+        l.push(r.top());
+        r.pop();
+    }
+}
+double findMedian()
+{
+    return l.size() > r.size() ? l.top() : ((double) l.top() + r.top()) * 0.5;
 }
 ```
 
@@ -572,7 +592,7 @@ int read(char *buf, int n)
 }
 ```
 
-### [Encode and Decode Strings](https://www.lintcode.com/en/old/problem/encode-and-decode-strings/#:~:text=Encode%20and%20Decode%20Strings,-Description&text=Design%20an%20algorithm%20to%20encode,the%20original%20list%20of%20strings.)
+### [Encode and Decode Strings](https://www.lintcode.com/problem/encode-and-decode-strings/description)
 
 ```cpp
 class Solution {

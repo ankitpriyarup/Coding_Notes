@@ -1619,6 +1619,26 @@ public:
 };
 ```
 
+### [Guess Number Higher or Lower II](https://leetcode.com/problems/guess-number-higher-or-lower-ii/)
+```c++
+vector<vector<int>> dp;
+int solve(int l, int r)
+{
+    if (l >= r) return 0;
+    if (dp[l][r] != -1) return dp[l][r];
+
+    int res = INT_MAX;
+    for (int i = l; i <= r; ++i)
+        res = min(res, i+max(solve(l, i-1), solve(i+1, r)));
+    return dp[l][r] = res;
+}
+int getMoneyAmount(int n)
+{
+    dp = vector<vector<int>>(n+1, vector<int>(n+1, -1));
+    return solve(1, n);
+}
+```
+
 ### Number of Subsequences of form a^i b^j c^k
 
 If given string is sorted in a b c order then ans would have been simply: \(2^cnta - 1\) \* \(2^cntb - 1\) \* \(2^cntc - 1\)  
@@ -1869,7 +1889,7 @@ signed main()
 '*' Matches any sequence of characters (including the empty sequence). */
 bool isMatch(string s, string p)
 {
-    bool dp[s.size()+1][p.size()+1] {};
+    vector<vector<bool>> dp(s.size()+1, vector<bool>(p.size()+1, false));
     dp[0][0] = true;
     for (int i = 1; i <= s.size(); ++i) dp[i][0] = false;
     for (int i = 1; i <= p.size(); ++i) dp[0][i] = (p[i-1] == '*') ? dp[0][i-1] : false;

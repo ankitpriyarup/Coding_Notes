@@ -187,17 +187,16 @@ ListNode* Solution::reverseBetween(ListNode* A, int B, int C)
 Why Floyd cycle detection Works?: [https://www.youtube.com/watch?v=LUm2ABqAs1w&t=1220s](https://www.youtube.com/watch?v=LUm2ABqAs1w&t=1220s)
 
 ```cpp
-int detectloop(Node *head)
+bool hasCycle(ListNode *head)
 {
-    Node *slow = head;
-    Node *fast = head->next;
+    if (!head) return false;
+    ListNode *slow = head, *fast = head->next;
     while (slow && fast && fast->next)
     {
-        slow = slow->next;
-        fast = fast->next->next;
-        if (slow == fast) return 1;
+        slow = slow->next, fast = fast->next->next;
+        if (slow == fast) return true;
     }
-    return 0;
+    return false;
 }
 
 void removeTheLoop(Node *A)

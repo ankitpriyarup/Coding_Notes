@@ -386,6 +386,42 @@ TreeNode* Solution::invertTree(TreeNode* root)
 }
 ```
 
+### [Flip Equivalent Binary Tree](https://leetcode.com/problems/flip-equivalent-binary-trees/)
+```c++
+bool flipEquiv(TreeNode* root1, TreeNode* root2)
+{
+    if (!root1 && !root2) return true;
+    if (root1 && root2 && root1->val == root2->val)
+    {
+        return (flipEquiv(root1->left, root2->left) && flipEquiv(root1->right, root2->right)) ||
+            (flipEquiv(root1->left, root2->right) && flipEquiv(root1->right, root2->left));
+    }
+    return false;
+}
+```
+
+### [Populate Next Right Pointers in each node](https://leetcode.com/problems/populating-next-right-pointers-in-each-node/)
+```c++
+Node* connect(Node* root)
+{
+    if (!root) return NULL;
+    queue<Node*> q;
+    q.push(root);
+    while (!q.empty())
+    {
+        int sz = q.size();
+        for (int i = 0; i < sz; ++i)
+        {
+            Node *cur = q.front(); q.pop();
+            cur->next = (i == sz-1) ? NULL : q.front();
+            if (cur->left) q.push(cur->left);
+            if (cur->right) q.push(cur->right);
+        }
+    }
+    return root;
+}
+```
+
 ### Symmetric Tree
 
 ```cpp
@@ -1562,6 +1598,35 @@ We can check if a graph is connected by starting at an arbitrary node and findin
 * A graph contains a cycle if during a graph traversal, we find a node whose neighbour \(other than the previous-parent node in the current path\) has already been visited.
 * Another way is to simply calculate the number of nodes and edges in every components. For a component to not contain cycle it must have x nodes and x-1 edges.
 
+### [Find Eventual Safe States](https://leetcode.com/problems/find-eventual-safe-states/)
+We need to find those node which don't form cycle in a given directed graph
+```c++
+const uint8_t UNVISITED = 0, VISITING = 1, VISITED = 2;
+bool dfs(vector<vector<int>>& graph, vector<uint8_t> &dp, int u)
+{
+    dp[u] = VISITING;
+    for (const int v : graph[u])
+    {
+        if (dp[v] == VISITING) return false;
+        if (dp[v] == UNVISITED)
+            if (!dfs(graph, dp, v)) return false;
+    }
+    dp[u] = VISITED;
+    return true;
+}
+vector<int> eventualSafeNodes(vector<vector<int>>& graph)
+{
+    vector<uint8_t> dp(graph.size(), UNVISITED);
+    vector<int> res;
+    for (size_t i = 0; i < graph.size(); ++i)
+    {
+        if (dp[i] == UNVISITED) dfs(graph, dp, i);
+        if (dp[i] == VISITED) res.push_back(i);
+    }
+    return res;
+}
+```
+
 ### Bipartiteness check
 
 The idea is to colour the starting node blue, all its neighbours red, all their neighbours blue, and so on. If at some point of the search we notice that two adjacent nodes have the same colour, this means that the graph is not bipartite.
@@ -2256,6 +2321,65 @@ int removeStones(vector<vector<int>>& stones)
     unordered_set<int> res;
     for (const int x : parent) res.insert(findSet(x));
     return n - res.size();
+}
+```
+
+### [Redundant Connection]
+- https://leetcode.com/problems/redundant-connection/
+- https://leetcode.com/problems/redundant-connection-ii/
+```c++
+// Variant - I (Undirected graph)
+vector<int> findRedundantConnection(vector<vector<int>>& edges)
+{
+    parent = vector<int>(edges.size()+1);
+    sz = vector<int>(edges.size()+1, 1);
+    for (int i = 1; i <= edges.size(); ++i) parent[i] = i;
+
+    vector<int> res;
+    for (const auto e : edges)
+    {
+        if (findSet(e[0]) != findSet(e[1])) unionSet(e[0], e[1]);
+        else res = e;
+    }
+    return res;
+}
+
+// Variant - II (Directed graph)
+vector<int> findRedundantDirectedConnection(vector<vector<int>>& edges)
+{
+    parent = vector<int>(edges.size()+1);
+    sz = vector<int>(edges.size()+1, 1);
+    for (int i = 1; i <= edges.size(); ++i) parent[i] = i;
+    
+    vector<int> inDeg(edges.size()+1, 0);
+    int node = -1;
+    for (const auto e : edges)
+    {
+        inDeg[e[1]]++;
+        if (inDeg[e[1]] == 2) { node = e[1]; break; }
+    }
+
+    if (node == -1)     // Directed cycle must be their
+    {
+        for (const auto e : edges)
+        {
+            if (findSet(e[0]) != findSet(e[1])) unionSet(e[0], e[1]);
+            else return {e[0], e[1]};
+        }
+    }
+    else                // There's a node with inDeg 2
+    {
+        int a = -1, b = -1;
+        for (const auto e : edges)
+        {
+            if (e[1] != node) unionSet(e[0], e[1]);
+            else if (a == -1) a = e[0];
+            else b = e[0];
+        }
+        if (findSet(a) == findSet(node)) return {a, node};
+        else return {b, node};
+    }
+    return {};
 }
 ```
 
