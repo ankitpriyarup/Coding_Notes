@@ -840,7 +840,7 @@ public:
 };
 ```
 
-### [Validate BST](https://leetcode.com/problems/validate-binary-search-tree/)
+### [Validate BST / Check BST](https://leetcode.com/problems/validate-binary-search-tree/)
 
 ```cpp
 /* Validate BST
@@ -982,7 +982,8 @@ vector<int> Solution::recoverTree(TreeNode* A)
 
 ```cpp
 // Serialize & Deserialize Binary Tree
-// If BST then very simple, store preorder value
+// If BST then very simple, store preorder value but here it's a general binary tree
+// We can have inorder and preorder, postorder and inorder, or this trick below
 class Codec {
 private:
     /*
@@ -1197,7 +1198,8 @@ public:
 
 ### [Convert BST to Greater Tree](https://leetcode.com/problems/convert-bst-to-greater-tree/)
 
-every key of the original BST is changed to the original key plus sum of all keys greater than the original key in BST.
+- (Same) https://leetcode.com/problems/binary-search-tree-to-greater-sum-tree/
+- every key of the original BST is changed to the original key plus sum of all keys greater than the original key in BST.
 
 ```cpp
 /*
@@ -1484,7 +1486,7 @@ TreeNode * upsideDownBinaryTree(TreeNode * root)
 }
 ```
 
-### [Clone Graph](https://leetcode.com/problems/clone-graph/)
+### [Clone Graph / Duplicate Graph](https://leetcode.com/problems/clone-graph/)
 
 ```cpp
 /*
@@ -1634,14 +1636,15 @@ The idea is to colour the starting node blue, all its neighbours red, all their 
 This algorithm of graph coloring works because of only 2 colors \(choosing whether to paint root as blue or red won't matter\). In general case finding graph coloring is np complete and finding minimum colors reqd is np hard.
 
 ### Finding Bridges
-
+- https://youtu.be/S7fIqu1LgJw
 * A bridge is defined as an edge which, when removed, makes the graph disconnected \(or increase connected components\)
 * O\(E + V\) algorithm
 
 ```cpp
 int timer = 0;
 vector<bool> visited;
-vector<int> tin, low;
+vector<int> tin, low;   // -> tin is time we enter that node (in time helps in maintaing ancesstor parent relation)
+                        // -> low is lowest ancesstor which can be reached from that node
 vector<pii> bridges;
 void DFS(int u, vector<int> adj[], int par = -1)
 {
@@ -1650,7 +1653,7 @@ void DFS(int u, vector<int> adj[], int par = -1)
     for (auto &v : adj[u])
     {
         if (v == par) continue;
-        if (visited[v]) low [u] = min(low[u], tin[v]);
+        if (visited[v]) low [u] = min(low[u], tin[v]);      // back edge, so it cannot be a bridge
         else
         {
             DFS(v, adj, u);
@@ -2140,7 +2143,7 @@ bool spfa(int s, int n, vector<pii> adj[], vector<int> &dist)
 ![](.gitbook/assets/image%20%2890%29%20%281%29.png)
 
 * Priority queue version is O\(E logV\)
-* A remarkable property in Dijkstra’s algorithm is that whenever a node is selected, its distance is final
+* A remarkable property in Dijkstra’s algorithm is that whenever a node is selected, its distance is final.
 
 ```cpp
 void dijkstra(int s, int n, vector<pii> adj[], vector<int> &dist, vector<int> &prev)
@@ -2169,8 +2172,10 @@ void dijkstra(int s, int n, vector<pii> adj[], vector<int> &dist, vector<int> &p
 }
 ```
 
-### 0-1 BFS
+### 0-1 BFS (Zero One BFS)
 
+* https://youtu.be/cMP1IaWuFuM
+* During the execution of BFS, the queue holding the vertices only containing elements from at max two successive levels of the BFS tree.
 * Used in unweighted graph \(or 0-1 weight graph\), performs in O\(E\)
 
 ```cpp
@@ -2604,7 +2609,7 @@ By product of Dijkstra algorithm is a DAG signifying considered shortest path ed
 
 ![](.gitbook/assets/image%20%28136%29.png)
 
-### Successor Paths
+### Successor Paths / Functional Graph
 
 * Such graphs have outdegree as 1 \(also called functional graph since it defines a function\)
 
@@ -2730,7 +2735,7 @@ int DFS(int u = 0, int par = -1)
     for (auto &v : adj[u])
     {
         if (v == par) continue;
-        int cur DFS(v, u);
+        int cur = DFS(v, u);
         if (cur > mx) mx = cur, pt = v;
         else if (cur > secondMx) secondMx = cur;
     }
@@ -2858,10 +2863,14 @@ Using the DFS traversed array we are performing certain queries
 
 ## Strongly Connectivity
 
+- Brute force is to use Floydd Warshal and check if all pair within component is non INF
+
 ### Kosaraju Algorithm
 
 * Find topological ordering like you do using DFS
-* Apply DFS over graph transpose in topological ordering those will be SCC.
+* Apply DFS over graph transpose in topological ordering those will be SCC (Strongly Connected Component).
+* If we do transpose of a SCC graph it will still remain SCC.
+* https://youtu.be/Rs6DXyWpWrI
 
 ```cpp
 const int MAXN = 1e5;
@@ -3125,32 +3134,37 @@ A De Bruijn sequence on set \['0', '1'\] of length 2 is 01100 because its substr
 
 Every possible string on st of length _n_ appears exactly once as a substring. n = 3 {0, 1} = 0011101000 in O\(K^n\)
 
+* https://leetcode.com/problems/cracking-the-safe/
 ```cpp
-unordered_set<string> done;
-vec<1, int> edges;
-void DFS(string node, string &st)
-{
-    for (int i = 0; i < st.size(); ++i)
+class Solution {
+public:
+    unordered_set<string> done;
+    vector<int> edges;
+    void dfs(string node, const int k)
     {
-        string cur = node+st[i];
-        if (done.find(cur) == done.end())
+        for (int i = 0; i < k; ++i)
         {
-            done.insert(cur);
-            DFS(cur.substr(1), st);
-            edges.push_back(i);
+            string cur = node + (char)('0'+i);
+            if (done.find(cur) == done.end())
+            {
+                done.insert(cur);
+                dfs(cur.substr(1), k);
+                edges.push_back(i);
+            }
         }
     }
-}
-string deBruijn(int n, string st)
-{
-    done.clear(); edges.clear();
-    string startingNode = string (n-1, st[0]);
-    DFS(startingNode, st);
-    string res;
-    for (auto &x : edges) res += st[x];
-    res += startingNode;
-    return res;
-}
+    
+    string crackSafe(int n, int k)  // for n = 3, k = 2 ans is 0011101000
+    {
+        done.clear(); edges.clear();
+        string startingNode = string(n-1, '0');     // 00
+        dfs(startingNode, k);
+        string res;
+        for (auto &x : edges) res += (char)('0' + x);
+        res += startingNode;
+        return res;
+    }
+};
 ```
 
 ### Hamiltonian Path

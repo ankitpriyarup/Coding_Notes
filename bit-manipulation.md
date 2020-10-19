@@ -10,6 +10,7 @@
 * \_\_builtin\_ctz\(x\): the number of zeros at the end of the number \(count trailing zeroes\)
 * \_\_builtin\_popcount\(x\): the number of ones in the number
 * \(A+B\) = \(A^B\) + 2\(A&B\)
+> Above equation is full adder, A^B is ans and A&B is carry. Final ans is A^B + 2*(A&B) multiplying by 2 in order to shift bit by one
 
 ```cpp
 // Multiplication
