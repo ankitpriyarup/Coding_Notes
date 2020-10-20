@@ -31,7 +31,7 @@ vector<ll> findDivisors(ll n)
     for (ll i = 1; i <= sqrt(n); ++i)
     {
         if (n%i == 0)
-    		{
+        {
             res.push_back(i);
             if (n/i != i) res.push_back(n/i);
         }
@@ -40,7 +40,7 @@ vector<ll> findDivisors(ll n)
 }
 ```
 
-### Sieve of Eratosthenes
+### Sieve of Eratosthenes - O(nloglogn)
 
 ```cpp
 const int MAXN = 1e5;
@@ -72,26 +72,61 @@ void findprimes()
             sieve[x] = primes[j];
     }
 }
-void segmentedSieve(int l)
+
+/*
+- generate price prime upto sqrt[r]
+- create an array of size r-l+1 and set all element to be 0 (0 means prime, 1 means composite)
+- For each prime p in range 2 to sqrt[r]: for every multiple of p in range l to r, mark m-l as 1
+
+l = 11, r = 20
+[11 12 13 14 15 16 17 18 19 20]
+For prime 2, mark 12, 14, 16, 18, 20 as composite
+*/
+int segmentedSieve(int n)
 {
-    findprimes();
-    memset(sieve, 1, sizeof(sieve));
-    for (int i = 0; i < primesSz; ++i)
+    vector<int> primes;
+    int nsqrt = sqrt(n);
+    vector<char> is_prime(nsqrt + 1, true);
+    for (int i = 2; i <= nsqrt; i++)
     {
-        int incr = primes[i] + primes[i];
-        int start = max(((l + primes[i] - 1) / primes[i]) * primes[i], primes[i] * primes[i]);
-        if ((start&1) == 0) start += primes[i];
-        start -= l;
-        for (int j = l; j <= MAXN; j += incr) sieve[j] = 0;
+        if (is_prime[i])
+        {
+            primes.push_back(i);
+            for (int j = i * i; j <= nsqrt; j += i)
+                is_prime[j] = false;
+        }
     }
-    primesSz = 0;
-    for (int i = (l&1) ? 0 : 1; i <= MAXN; i += 2)
-        if (sieve[i]) primes[primesSz++] = l+i;
+
+    const int S = 10000;
+    int result = 0;
+    vector<char> block(S);
+    for (int k = 0; k * S <= n; k++)
+    {
+        fill(block.begin(), block.end(), true);
+        int start = k * S;
+        for (int p : primes)
+        {
+            int start_idx = (start + p - 1) / p;
+            int j = max(start_idx, p) * p - start;
+            for (; j < S; j += p)
+                block[j] = false;
+        }
+        if (k == 0)
+            block[0] = block[1] = false;
+        for (int i = 0; i < S && start + i <= n; i++)
+        {
+            if (block[i])
+                result++;
+        }
+    }
+    return result;
 }
+
 ```
 
 ### Euler totient function
 
+Counts the number of integers between 1 and n inclusive, which are coprime to n
 ```cpp
 // Euler totient function in logN
 int phi(int n)
