@@ -2625,31 +2625,27 @@ In finding succ\(x, k\) it takes O\(k\) time however with preprocessing query be
 // For query, present k as sum of powers of 2 so 11 = 8 + 2 + 1
 // succ(x,11) = succ(succ(succ(x,8),2),1)
 const int MAXN = 2*1e5 + 5;
-vec<2, int> sparseTable(32, MAXN);
+vec<2, int> succ(32, MAXN);
 signed main()
 {
     ios_base::sync_with_stdio(false); cin.tie(NULL);
     int n, q; cin >> n >> q;
-    for (int j = 1; j <= n; ++j) cin >> sparseTable[0][j];
+    for (int j = 1; j <= n; ++j) cin >> succ[0][j];
     for (int i = 1; i < 32; ++i)
         for (int j = 1; j <= n; ++j)
-            sparseTable[i][j] = sparseTable[i-1][sparseTable[i-1][j]];
-
+            succ[i][j] = succ[i-1][succ[i-1][j]];
+ 
     while (q--)
     {
         int x, k; cin >> x >> k;
-        vec<1, int> repre;
-        int cur = 1;
+        int i = 0;
         while (k)
         {
-            if (k&1) repre.push_back(cur);
-            k >>= 1; cur <<= 1;
+            if (k&1) x = succ[i][x];
+            k >>= 1;
+            ++i;
         }
-        reverse(all(repre));
-        int res = x;
-        for (auto &v : repre)
-            res = sparseTable[log2(v)][res];
-        cout << res << '\n';
+        cout << x << '\n';
     }
     return 0;
 }
