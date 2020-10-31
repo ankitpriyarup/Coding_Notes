@@ -2045,6 +2045,7 @@ signed main()
     for (auto &x : edges) cin >> x.u >> x.v >> x.w;
 
     vec<1, int> dist(n+1, INF), par(n+1, -1);
+    dist[1] = 0;
     int x;
     for (int i = 0; i < n; ++i)
     {
