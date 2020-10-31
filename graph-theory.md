@@ -2669,21 +2669,19 @@ Above logic in successor paths can be applied here
 ![](.gitbook/assets/image%20%2888%29.png)
 
 ```cpp
-const int N = 2*1e5;
-int n;
-vector<int> adj[N], toLeaf(N), maxLength(N);
-int DFS(int u = 0, int par = -1, int depth = 0)
+int ans = 0;
+int dfs(int u = 1, int par = -1)
 {
-    int mxDepth = 0, secondMxDepth = 0;
-    for (auto &v : adj[u])
+    int dep1 = 0, dep2 = 0;
+    for (const int v : adj[u])
     {
         if (v == par) continue;
-        int cur = DFS(v, u, depth+1);
-        if (cur > mxDepth) secondMxDepth = mxDepth, mxDepth = cur;
-        else if (cur > secondMxDepth) secondMxDepth = cur;
+        int curDep = dfs(v, u);
+        if (curDep > dep1) dep2 = dep1, dep1 = curDep;
+        else if (curDep > dep2) dep2 = curDep;
     }
-    maxLength[u] = mxDepth + secondMxDepth + 1;
-    return toLeaf[u] = mxDepth+1;
+    ans = max(ans, dep1+dep2);
+    return dep1+1;
 }
 ```
 
