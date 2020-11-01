@@ -2045,6 +2045,7 @@ signed main()
     for (auto &x : edges) cin >> x.u >> x.v >> x.w;
 
     vec<1, int> dist(n+1, INF), par(n+1, -1);
+    dist[1] = 0;
     int x;
     for (int i = 0; i < n; ++i)
     {
@@ -2624,31 +2625,27 @@ In finding succ\(x, k\) it takes O\(k\) time however with preprocessing query be
 // For query, present k as sum of powers of 2 so 11 = 8 + 2 + 1
 // succ(x,11) = succ(succ(succ(x,8),2),1)
 const int MAXN = 2*1e5 + 5;
-vec<2, int> sparseTable(32, MAXN);
+vec<2, int> succ(32, MAXN);
 signed main()
 {
     ios_base::sync_with_stdio(false); cin.tie(NULL);
     int n, q; cin >> n >> q;
-    for (int j = 1; j <= n; ++j) cin >> sparseTable[0][j];
+    for (int j = 1; j <= n; ++j) cin >> succ[0][j];
     for (int i = 1; i < 32; ++i)
         for (int j = 1; j <= n; ++j)
-            sparseTable[i][j] = sparseTable[i-1][sparseTable[i-1][j]];
-
+            succ[i][j] = succ[i-1][succ[i-1][j]];
+ 
     while (q--)
     {
         int x, k; cin >> x >> k;
-        vec<1, int> repre;
-        int cur = 1;
+        int i = 0;
         while (k)
         {
-            if (k&1) repre.push_back(cur);
-            k >>= 1; cur <<= 1;
+            if (k&1) x = succ[i][x];
+            k >>= 1;
+            ++i;
         }
-        reverse(all(repre));
-        int res = x;
-        for (auto &v : repre)
-            res = sparseTable[log2(v)][res];
-        cout << res << '\n';
+        cout << x << '\n';
     }
     return 0;
 }
@@ -2672,21 +2669,19 @@ Above logic in successor paths can be applied here
 ![](.gitbook/assets/image%20%2888%29.png)
 
 ```cpp
-const int N = 2*1e5;
-int n;
-vector<int> adj[N], toLeaf(N), maxLength(N);
-int DFS(int u = 0, int par = -1, int depth = 0)
+int ans = 0;
+int dfs(int u = 1, int par = -1)
 {
-    int mxDepth = 0, secondMxDepth = 0;
-    for (auto &v : adj[u])
+    int dep1 = 0, dep2 = 0;
+    for (const int v : adj[u])
     {
         if (v == par) continue;
-        int cur = DFS(v, u, depth+1);
-        if (cur > mxDepth) secondMxDepth = mxDepth, mxDepth = cur;
-        else if (cur > secondMxDepth) secondMxDepth = cur;
+        int curDep = dfs(v, u);
+        if (curDep > dep1) dep2 = dep1, dep1 = curDep;
+        else if (curDep > dep2) dep2 = curDep;
     }
-    maxLength[u] = mxDepth + secondMxDepth + 1;
-    return toLeaf[u] = mxDepth+1;
+    ans = max(ans, dep1+dep2);
+    return dep1+1;
 }
 ```
 
