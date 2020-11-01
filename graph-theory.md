@@ -2725,35 +2725,37 @@ vector<int> findDiameter(pii &pointA, pii &pointB)
 ![Here we are finding length \(edges\), we can generally find nodes and subtract it by 1](.gitbook/assets/image%20%2894%29.png)
 
 ```cpp
-const int MAXN = 1e5;
 int n;
-vector<int> adj[MAXN+1];
-int source[MAXN+1], dist[MAXN+1], secondMaxDist[MAXN+1];
-int DFS(int u = 0, int par = -1)
+vector<vector<int>> adj;
+vector<int> dist;
+void dfs(int u, int par = -1)
 {
-    int mx = 0, pt = -1, secondMx = 0;
-    for (auto &v : adj[u])
+    for (const int v : adj[u])
     {
         if (v == par) continue;
-        int cur = DFS(v, u);
-        if (cur > mx) mx = cur, pt = v;
-        else if (cur > secondMx) secondMx = cur;
+        dist[v] = dist[u]+1;
+        dfs(v, u);
     }
-    source[u] = pt, dist[u] = mx+1, secondMaxDist[u] = secondMx+1;
-    return mx+1;
 }
-int DFS2(int u = 0, int par = -1)
+vector<int> allLongestPath()
 {
-    if (par != -1)
-    {
-        dist[u] = max(dist[u], (source[par] == u) ? secondMaxDist[par]+1 : dist[par]+1);
-        if (dist[u] == dist[par]+1 || dist[u] == secondMaxDist[par]+1) source[u] = par;
-    }
-    for (auto &v : adj[u])
-    {
-        if (v == par) continue;
-        DFS2(v, u);
-    }
+    vector<int> res(n+1, 0);
+    dfs(1);
+
+    int optimal = 0;
+    for (int i = 1; i <= n; ++i)
+        if (dist[i] > dist[optimal]) optimal = i;
+    fill(dist.begin(), dist.end(), 0);
+    dfs(optimal);
+    for (int i = 1; i <= n; ++i) res[i] = dist[i];
+
+    for (int i = 1; i <= n; ++i)
+        if (dist[i] > dist[optimal]) optimal = i;
+    fill(dist.begin(), dist.end(), 0);
+    dfs(optimal);
+    for (int i = 1; i <= n; ++i) res[i] = max(res[i], dist[i]);
+
+    return res;
 }
 ```
 
