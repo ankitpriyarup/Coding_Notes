@@ -178,3 +178,8 @@ struct hash_pair
 
 unordered_map<pair<int, int>, int, hash_pair> rec;
 ```
+
+### Lowerbound on set<pair<int, int>>
+```c++
+x.lower_bound({first, -inf});
+```

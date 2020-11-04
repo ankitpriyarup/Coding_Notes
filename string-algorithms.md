@@ -489,6 +489,173 @@ suffices = \["abaab", "baab", "aab", "ab", "b"\]
 after sorting = \["aab", "ab", "abaab", "b", "baab"\]  
 Therefore suffix array will be = \[2, 3, 0, 4, 1\]
 
+### [Effectively constructing suffix array](https://codeforces.com/edu/course/2/lesson/2)
+![](.gitbook/assets/suffixarray.png)
+- In the final suffix array, instead of storing entire string store index from which till end the suffix corresponds.
+- Append $ at end of each suffix (because it's lexiographically the smallest so it won't change any suffix order) and make all string same len.
+- We can also apply radix sort on above preparation it will be: O(n * (n + 26)) i.e O(n^2)
+- Finally make strings of len 2^k
+- Total time: O(nlog^2n) we can optimize it to nlogn aswell
+![](.gitbook/assets/suffixarray2.png)
+
+```c++
+const int alphabet = 256;
+int strLen;
+vector<int> sortCyclicShifts(string const& s)
+{
+    int n = s.size();
+    vector<int> p(n), c(n), cnt(max(alphabet, n), 0);
+    for (int i = 0; i < n; i++) cnt[s[i]]++;
+    for (int i = 1; i < alphabet; i++) cnt[i] += cnt[i-1];
+    for (int i = 0; i < n; i++) p[--cnt[s[i]]] = i;
+    c[p[0]] = 0;
+    int classes = 1;
+    for (int i = 1; i < n; i++)
+    {
+        if (s[p[i]] != s[p[i-1]]) classes++;
+        c[p[i]] = classes - 1;
+    }
+    vector<int> pn(n), cn(n);
+    for (int h = 0; (1 << h) < n; ++h)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            pn[i] = p[i] - (1 << h);
+            if (pn[i] < 0) pn[i] += n;
+        }
+        fill(cnt.begin(), cnt.begin() + classes, 0);
+        for (int i = 0; i < n; i++) cnt[c[pn[i]]]++;
+        for (int i = 1; i < classes; i++) cnt[i] += cnt[i-1];
+        for (int i = n-1; i >= 0; i--) p[--cnt[c[pn[i]]]] = pn[i];
+        cn[p[0]] = 0; classes = 1;
+        for (int i = 1; i < n; i++)
+        {
+            pii cur = {c[p[i]], c[(p[i] + (1 << h)) % n]};
+            pii prev = {c[p[i-1]], c[(p[i-1] + (1 << h)) % n]};
+            if (cur != prev) ++classes;
+            cn[p[i]] = classes - 1;
+        }
+        c.swap(cn);
+    }
+    return p;
+}
+vector<int> constructSuffixArray(string s)
+{
+    s += "$"; strLen = s.size();
+    vector<int> sorted_shifts = sortCyclicShifts(s);
+    sorted_shifts.erase(sorted_shifts.begin());
+    return sorted_shifts;
+}
+```
+
+### Substring Search
+- Each substring is the prefix of some suffix
+- Since our suffix array is already sorted apply binary search to it and find a suffix whose prefix include k
+- Total time: logN * len(p) along with NlogN building
+```c++
+bool SearchSubstring(vector<int> &suffArr, string &s, string &k)    // s is original string, k is substr to find
+{
+    int l = 0, r = suffArr.size()-1;
+    while (l <= r)
+    {
+        int mid = l + (r-l)/2, f = 0;
+        for (int i = 0; i < k.size(); ++i)
+        {
+            if (s[suffArr[mid] + i] < k[i]) { f = -1; break; }
+            if (s[suffArr[mid] + i] > k[i]) { f = 1; break; }
+        }
+        if (f == 0) return true;
+        if (f < 0) l = mid+1;
+        else r = mid-1;
+    }
+    return false;
+}
+```
+
+### Count substrings
+- Total time: logN * len(p) along with NlogN building
+```c++
+int lowerBoundSearchSubstring(vector<int> &suffArr, string &s, string &k)
+{
+    int l = 0, r = suffArr.size()-1, val = -1;
+    while (l <= r)
+    {
+        int mid = l + (r-l)/2;
+        string nw = s.substr(suffArr[mid], k.size());
+        if (k == nw) val = mid, r = mid-1;
+        else if (k < nw) r = mid-1;
+        else l = mid+1;
+    }
+    return val;
+}
+int upperBoundSearchSubstring(vector<int> &suffArr, string &s, string &k)
+{
+    int l = 0, r = suffArr.size()-1, val = -1;
+    while (l <= r)
+    {
+        int mid = l + (r-l)/2;
+        string nw = s.substr(suffArr[mid], k.size());
+        if (k == nw) val = mid+1, l = mid+1;
+        else if (k < nw) r = mid-1;
+        else l = mid+1;
+    }
+    return val;
+}
+int countSubstring(vector<int> &suffArr, string &s, string &k)
+{
+    return upperBoundSearchSubstring(suffArr, s, k) - lowerBoundSearchSubstring(suffArr, s, k);
+}
+```
+
+### LCP (Longest Common Prefix) of two strings
+![](.gitbook/assets/lcp.png)
+```c++
+vector<int> constructLCP(string const& s, vector<int> const& p)     // string s and it's suffix array p
+{
+    int n = s.size();
+    vector<int> rank(n, 0);
+    for (int i = 0; i < n; i++) rank[p[i]] = i;
+    int k = 0;
+    vector<int> lcp(n-1, 0);
+    for (int i = 0; i < n; i++)
+    {
+        if (rank[i] == n - 1) { k = 0; continue; }
+        int j = p[rank[i] + 1];
+        while (i + k < n && j + k < n && s[i+k] == s[j+k]) k++;
+        lcp[rank[i]] = k;
+        if (k) k--;
+    }
+    return lcp;
+}
+```
+
+### Count number of different substrings
+```c++
+int numberOfDiffSubstrings(vector<int> &lcp, string &s)
+{
+    int n = s.size();
+    return ((n*(n+1))/2 - accumulate(lcp.begin(), lcp.end(), 0LL));
+}
+```
+
+### Longest Common Substring
+```c++
+string s, t; cin >> s >> t;
+string str = s + '#' + t;
+auto sa = constructSuffixArray(str);
+auto lcp = constructLCP(str, sa);
+string res = "";
+for (int i = 0; i < str.size()-1; ++i)
+{
+    if ((sa[i] < s.size()) ^ (sa[i+1] < s.size()))
+    {
+        if (lcp[i] > res.size())
+            res = str.substr(sa[i], lcp[i]);
+    }
+}
+cout << res << '\n';
+```
+
 ## Suffix Tree / Trie
 
 ```cpp

@@ -868,6 +868,108 @@ public:
 };
 ```
 
+### [Text Editor]
+```c++
+class textEditor
+{
+private:
+    stack<char> leftStk, rightStk;
+
+public:
+    void insertWord(char word[])
+    {
+        int i = 0;
+        while (word[i] != '\0')
+            insertCharacters(word[i++]);
+    }
+    void insertCharacters(char character)
+    {
+        leftStk.push(character);
+    }
+    bool deleteCharacter()
+    {
+        if (rightStk.empty()) return false;
+        else rightStk.pop();
+        return true;
+    }
+    bool backSpaceCharacter()
+    {
+        if (leftStk.empty()) return false;
+        else leftStk.pop();
+        return true;
+    }
+    void moveCursor(int position)
+    {
+        int leftSz = leftStk.size(), rightSz = rightStk.size();
+        if (position < leftSz) moveLeft(position);
+        else moveRight(position - leftSz);
+    }
+    void moveLeft(int position)
+    {
+        int leftSz = leftStk.size();
+        while (position != leftSz)
+        {
+            rightStk.push(leftStk.top());
+            leftStk.pop();
+            leftSz--;
+        }
+    }
+    void moveRight(int cnt)
+    {
+        int rightSz = rightStk.size(), i = 1;
+        if (cnt > rightSz) cout << "Cannot move the cursor, right, to the specified position\n";
+        else
+        {
+            while (i <= cnt)
+            {
+                leftStk.push(rightStk.top());
+                rightStk.pop();
+                i++;
+            }
+        }
+    }
+    void findAndReplaceChar(char find, char replace)
+    {
+        int cnt = 1, originalCharPos = leftStk.size();
+        moveCursor(0);
+        while (!rightStk.empty())
+        {
+            if (rightStk.top() == find)
+            {
+                deleteCharacter();
+                insertCharacters(replace);
+            }
+            else moveCursor(cnt++);
+        }
+        moveCursor(originalCharPos);
+    }
+    void print()
+    {
+        int cnt = 1, originalCharPos = leftStk.size();
+        moveCursor(0);
+        while (!rightStk.empty())
+        {
+            cout << rightStk.top();
+            moveCursor(cnt++);
+        }
+        moveCursor(originalCharPos);
+        cout << '\n';
+    }
+};
+
+int main()
+{
+    textEditor editor;
+    editor.insertWord("Ankit"); editor.insertWord(" Priyarup"); editor.insertWord(" is"); editor.insertWord(" a"); editor.insertWord(" good"); editor.insertWord(" boy!");
+    editor.insertCharacters(' '); editor.insertCharacters(':'); editor.insertCharacters(')');
+    editor.print();
+    editor.moveCursor(0);
+    editor.insertWord("AP, ");
+    editor.print();
+    return 0;
+}
+```
+
 ### [Time Based Key Value Store](https://leetcode.com/problems/time-based-key-value-store/)
 
 ```cpp

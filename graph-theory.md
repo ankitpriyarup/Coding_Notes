@@ -2649,6 +2649,35 @@ signed main()
     }
     return 0;
 }
+
+// Find kth parent of a node in tree: https://cses.fi/problemset/task/1687
+const int MAXN = 2*1e5 + 5;
+vec<2, int> par(32, MAXN);
+signed main()
+{
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, q; cin >> n >> q;
+    par[0][1] = 0;
+    for (int j = 2; j <= n; ++j) cin >> par[0][j];
+    for (int i = 1; i < 32; ++i)
+        for (int j = 1; j <= n; ++j)
+            par[i][j] = par[i-1][par[i-1][j]];
+
+    while (q--)
+    {
+        int x, k; cin >> x >> k;
+        int i = 0;
+        while (k)
+        {
+            if (k&1) x = par[i][x];
+            k >>= 1;
+            ++i;
+        }
+        if (x == 0) x = -1;
+        cout << x << '\n';
+    }
+    return 0;
+}
 ```
 
 ## Trees
@@ -2755,6 +2784,40 @@ vector<int> allLongestPath()
 ```
 
 ### Re-rooting technique
+
+[https://cses.fi/problemset/task/1133](https://cses.fi/problemset/task/1133)
+For each node in tree find sum of distance to all other nodes
+```c++
+int n;
+vector<vector<int>> adj;
+vector<int> sz;
+void dfs(vector<int> &res, int u = 1, int par = -1, int dis = 0)
+{
+    sz[u] = 1, res[1] += dis;
+    for (const int v : adj[u])
+    {
+        if (v == par) continue;
+        dfs(res, v, u, dis+1);
+        sz[u] += sz[v];
+    }
+}
+void dfs2(vector<int> &res, int u = 1, int par = -1)
+{
+    for (const int v : adj[u])
+    {
+        if (v == par) continue;
+        res[v] = res[u] + (n - sz[v]) - sz[v];
+        dfs2(res, v, u);
+    }
+}
+vector<int> allPathSumForEveryNode()
+{
+    vector<int> res(n+1, 0);
+    dfs(res);          // fills sz for each node and find res for 1st (root) node
+    dfs2(res);         // finds actual res using re rooting technique
+    return res;
+}
+```
 
 [https://atcoder.jp/contests/abc160/tasks/abc160\_f](https://atcoder.jp/contests/abc160/tasks/abc160_f)
 
