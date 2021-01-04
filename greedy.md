@@ -61,6 +61,49 @@ Given two strings, write a method to decide if one is a permutation of the other
 - Count item using a hashtable
 ```
 
+### Valid Paranthesis String
+
+Given a string containing only three types of characters: '(', ')' and '*'. * can be replaced by ( or ). Check if string is valid
+
+```c++
+// Recursive solution, easily can be memoized O(N^2)
+bool checkValid(string &s, int cnt = 0, int cur = 0)
+{
+    if (cnt < 0)
+    	return false;
+    if (cur == s.size())
+    	return (cnt == 0);
+
+    if (s[cur] == '(')
+    	return checkValid(s, cnt+1, cur+1);
+    else if (s[cur] == ')')
+    	return checkValid(s, cnt-1, cur+1);
+    else
+    {
+    	return checkValid(s, cnt, cur+1) | checkValid(s, cnt+1, cur+1) |
+    	checkValid(s, cnt-1, cur+1);
+    }
+}
+bool checkValidString(string s)
+{
+    return checkValid(s);
+}
+
+// Greedy solution
+bool checkValidString(string s)
+{
+    int l = 0, r = 0;
+    for (char ch : s)
+    {
+        l += (ch == '(') ? 1 : -1;      // we are putting ) in place of *
+        r += (ch == ')') ? -1 : 1;      // we are putting ( in place of *
+        l = max(l, 0);                  // closing brackets cannot exceed than opening (no < 0 case)
+        if (r < 0) break;               // In case of )
+    }
+    return (l == 0);
+}
+```
+
 ### [Excel Number to Title](https://leetcode.com/problems/excel-sheet-column-title/)
 
 ```cpp
