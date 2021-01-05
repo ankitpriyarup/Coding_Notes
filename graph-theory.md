@@ -1525,6 +1525,29 @@ Node* cloneGraph(Node* node)
 }
 ```
 
+### [Cousins in Binary Tree](https://leetcode.com/problems/cousins-in-binary-tree/)
+```c++
+void findNode(TreeNode* root, int depth, const int target, pair<int, TreeNode*> &toFind,
+                  TreeNode *par = NULL)
+{
+    if (!root) return;
+    if (root->val == target)
+    {
+        toFind = {depth, par};
+        return;
+    }
+    findNode(root->left, depth+1, target, toFind, root);
+    findNode(root->right, depth+1, target, toFind, root);
+}
+bool isCousins(TreeNode* root, int x, int y)
+{
+    pair<int, TreeNode*> X, Y;
+    findNode(root, 0, x, X);
+    findNode(root, 0, y, Y);
+    return (X.first == Y.first && X.second != Y.second);
+}
+```
+
 ### [Binary Tree Pruning](https://leetcode.com/problems/binary-tree-pruning/)
 
 Remove every subtree not containing a 1 in it
