@@ -214,3 +214,23 @@ bool checkOverlap(int radius, int x_center, int y_center, int x1, int y1, int x2
     return (deltaX*deltaX + deltaY*deltaY) <= (radius*radius);
 }
 ```
+
+### [Check Straight Line](https://leetcode.com/problems/check-if-it-is-a-straight-line/)
+```c++
+// Check slope of continuous segments
+bool checkStraightLine(vector<vector<int>>& coordinates)
+{
+    int p = (coordinates[1][1] - coordinates[0][1]);
+    int q = (coordinates[1][0] - coordinates[0][0]);
+    for (int i = 2; i < coordinates.size(); ++i)        
+    {
+        int r = (coordinates[i][1] - coordinates[i-1][1]);
+        int s = (coordinates[i][0] - coordinates[i-1][0]);
+        if (p * s != r * q) return false;
+    }
+    return true;
+}
+
+// Check three points there triangle area must be zero using heron's formula
+https://leetcode.com/problems/check-if-it-is-a-straight-line/discuss/408968/Check-collinearity
+```
