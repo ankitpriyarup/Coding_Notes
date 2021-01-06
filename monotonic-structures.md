@@ -1212,6 +1212,33 @@ int shortestSubarray(vector<int>& arr, int k, int &r, int &l)
 }
 ```
 
+### [Remove K Digits](https://leetcode.com/problems/remove-k-digits/)
+```c++
+string removeKdigits(string num, int k)
+{
+    stack<char> st;
+    int cnt = k;
+    for (char ch : num)
+    {
+        while (!st.empty() && st.top() > ch && cnt)
+        {
+            st.pop();
+            cnt--;
+        }
+        st.push(ch);
+    }
+    string res(st.size(), '0');
+    for (int i = st.size()-1; i >= 0; --i)
+    {
+        res[i] = st.top();
+        st.pop();
+    }
+    int cur = 0, keep = num.size()-k;   // remove leading zeroes from res
+    while (cur < keep && res[cur] == '0') ++cur;
+    return cur == keep ? "0" : res.substr(cur, keep - cur);
+}
+```
+
 TODO:
 
 * **LC739. Daily Temperatures**
