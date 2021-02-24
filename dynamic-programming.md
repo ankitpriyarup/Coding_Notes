@@ -19,7 +19,7 @@ Note that {1, 2} and {2, 1} are considered same.
 Answer:
 dp[i] = dp[i-1] + (n-1) * dp[n-2]
 nth person can remain single so dp[n-1] + he can be coupled with other (n-1)
-person making dp[n-2] * (n-2)
+person making dp[n-2] * (n-1)
 ```
 
 ### Jump Game
