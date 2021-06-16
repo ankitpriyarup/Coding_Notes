@@ -1,454 +1,765 @@
 # Bit Manipulation
 
-* C++ type int is a 32-bit type, which means that every int number consists of 32 bits
-* Representation is indexed from right to left
-* The bit representation of a number is either signed or unsigned
-* **Least Significant Bit \(LSB\) & Most Significant Bit \(MSB\):** 99 in binary \(MSB part\)01100011\(LSB part\) so in MSB 01100011 in LSB 11000110 Endiness \(Storing data in memory\) : Little Endian \(LSB\), Big Endian \(MSB\)
-* 1's Complement: Toggling every bit ~
-* 2's Complement: -X = ~X + 1 X = ~\(-X-1\)
-* \_\_builtin\_clz\(x\): the number of zeros at the beginning of the number \(count leading zeroes\)
-* \_\_builtin\_ctz\(x\): the number of zeros at the end of the number \(count trailing zeroes\)
-* \_\_builtin\_popcount\(x\): the number of ones in the number
-* \(A+B\) = \(A^B\) + 2\(A&B\)
-> Above equation is full adder, A^B is ans and A&B is carry. Final ans is A^B + 2*(A&B) multiplying by 2 in order to shift bit by one
+* In C++ every int is 32 bits.
+* They are indexed from right to left.
+* The bit representation of a paritcular number is either signed or unsigned.
+* **Least Significat Bit (LSB) & Most Significant Bit (MSB):** 10 in binary is (MSB Part)1010 (LSB Part), so from MSB side the number is 1010 from LSB side number is 0101. Endiness (storing the actual data in the memory): Little Endian (LSB), Big Endian (MSB).
+* 1's Complement is nothing but toggling every bit of the number. It is represented by using the symbol ~.
+* 2's Compliment is : ~X + 1
+* \_\_builtin\_clz(x): counts the number of zeros present in the leading position.
+* \_\_builtin\_ctz(x): count the trailing zeros.
+* (A + B) =  (A ^ B) + 2(A&B)
+
+> In the above equation, it is the full adder.  Here A ^ B is the answer where as A&B is the carry. We are multiplying the A&B by 2 in order to left shift the bits. Instead of multiplying by 2 you can simply use left shift too. ( (A&B) << 1 )
 
 ```cpp
-// Multiplication
-int mul(int a, int b)
-{
-    int ans = 0;
-    for (int i = 0 ; i < 32; ++i)
-    {
-        if (b & 1) ans += a;
-        b = b>>1;
-        a = a<<1;
+// Multplication of two numbers without using *
+
+int multiply (int a, int b) {
+    int ans  =  0;
+    // loop is upto 32 because number of bits in int is 32 in cpp
+    for(int i = 0; i < 32; i++) { // here wer are iterating till
+    // b is 0
+    // we can replace this loop by while(b!=0)
+        if (b&1) ans += a; // if b is oodd add a to the answer
+        b >>= 1; // right shifting the b or dividing by 2
+        a <<= 1; // left shifting a or multiplying by 2
     }
     return ans;
 }
 
-// Swap two numbers without extra space
-int x = 10, y = 5;
-x = x ^ y;
-y = x ^ y;      //y = (x ^ y) ^ y = (y ^ y) ^ x = 0 ^ x = x
-x = x ^ y;      //x = (x ^ y) ^ x = y
-```
+/*
+In simple terms it can explained as
 
-> **Multiplication:**  
-> i \* 8;  
-> i &lt;&lt; 3; \[8 = 2^3, so use 3\]
->
-> **Division:**  
-> i / 16;  
-> i &gt;&gt; 4; \[16 = 2^4, so use 4\]
->
-> **Modulo:**  
-> i % 4;  
-> i & 3; \[4 = 1 &lt;&lt; 2, apply \(\(1 &lt;&lt; 2\) - 1\), so use 3\]
->
-> There are two shifts - logical shift & arithmetic shift. In right both are different for left both are same. Logical shift is normal. In arithmetic most significant signed bit is copied instead of zero. So a negative number remains negative.
-
-### Repeating elements of array problem
-
-Given array \[1, 2, 4, 2, 1\] finding xor 1^2^4^2^1 = xor\(1^1\)^\(2^2\)^\(4\) = 0^0^4 = 4
-
-Given Array \[1, 1, 2, 2, 4, 5\] we need to find both 4 & 5  
- If we simply xor all numbers we will get 4^5 which will definitely be non zero. \(100\)^\(101\)=\(001\) Now if we divide the array elements into two one having 1 at unit place other having 0. \[1, 1, 5\], \[2, 2, 4\] take xor of both to get the ans  
- If 100\(4\) & 110\(6\) are non repeating numbers we need to divide the array based on tense \(check rightmost set bit pos\) place set or unset
-
-```cpp
-int arr[] = {1, 1, 2, 2, 3, 9};
-int n = sizeof(arr) / sizeof(int);
-int xors = 0;
-for (int i = 0; i < n; ++i) xors ^= arr[i];
-
-int temp = 0;
-while(xors > 0)
-{
-    if (xors&1) break;
-    ++temp;
-    xors >>= 1;
-}
-int mask = 1<<temp;
-
-int num1 = 0, num2 = 0;
-for (int i = 0; i < n; ++i)
-{
-    if (((arr[i]&mask)>>temp)&1) num1 ^= arr[i];
-    else num2 ^= arr[i];
-}
-cout << num1 << " " << num2 << endl;
-```
-
-Given array \[7, 7, 3, 4, 2, 4, 3, 3, 4, 7\] all numbers except one is occurring thrice we need to find that number.  
- add binary position values \(111 + 111 + 011 + 100 + 010 + 100 + 011 + 011 + 100 + 111\) = 676 %3 all digit = 010 = 0.20 + 1.21 + 0.22 = 2
-
-```cpp
-int arr[] = {7, 11, 3, 4, 9, 4, 3, 3, 4, 7, 9, 9, 7};
-    int n = sizeof(arr) / sizeof(int);
-
-    int count[32] {};
-    for (int i = 0; i < n; ++i)
-    {
-        int cur = arr[i], pos = 0;
-        while (cur > 0)
-        {
-            if (cur&1) ++count[pos];
-            ++pos;
-            cur >>= 1;
-        }
+while (b != 0) {
+    if (b is odd) {
+        result = result + a;
     }
-    int ans = 0;
-    for (int i = 0; i < 32; ++i) ans += pow(2, i) * (count[i] % 3);
-    cout << ans << endl;
+    a = a * 2;
+    b = b / 2;
+}
+*/
+
+// if we want to avoid + operator then we can implement below code
+
+int add(int x, int y) {
+    while( y!= 0) {
+        int carry = x & y;
+        x =  x ^ y;
+        y = carry << 1;
+    }
+    return x;
+}
+
+// same code can be recursively done as
+
+int add(int x, int y) {
+    if (y == 0) {
+        return x;
+    }
+
+    return add(x^y, (x&y)<<1);
+}
+
+// Swapping of two numbers without using extra variable
+int x = 10, y = 30;
+x = x ^ y;
+y = y ^ x;
+x = x ^ y;
+
 ```
 
-### Calculating number of set bits
+> **Multiplicaton**
+> i * 8
+> i << 3; [ as 2 power 3 is 8 , we are using 3]
+>
+> **Division**
+> i / 16;
+> i >> 4 [ as 2 power 4 is 16, so we use 4]
+>
+> **Modulo**
+> i % 4;
+> i & 3; [ 4 = 1 << 2, apply ((1 << 2) - 1), so we are using 3]
+> There are two shift - logical shift & arithmetic shift. For Right shift both behave differently, left shift is same for logical and arithmetic. Logical shift is normal where as in arithmetic MSB signed bit is copied instead of zero, so that a negative number remains negative.
+
+## Repeating elements of array problem
+
+Given an array [1, 2, 4, 2, 1], finding xor of all the elements 1 ^ 2 ^ 4 ^ 2 ^ 1 = (1 ^ 1) ^ (2 ^ 2) ^ (4) = (0) ^ (0) ^ 4 = 4.
+
+Given an array [1, 1, 2, 2, 4, 5] here we need to find both 4 and 5.
+If we simply perform the xor operation then our answer will be 4^5 which will definitely be a non zero number (100) ^ (101) = (001). Now if we divide the array into two parts , one part will have 1 in the units place (LSB or Odd numbers), other part will have 0 in the units place (MSB or Even numebrs) i.e [1, 1, 5], [2, 2, 4] now by taking xor of both arrays separately we can find the answer.
+Suppose if we have 2 even non repeating numbers then we need do divide the numbers based on the right most set bit position
+Example in case of 4 (100) and 6 (110) we can go with the second bit position.
 
 ```cpp
-int countBits(int n)
-{
-    //Time: O(number of bits)
+int array[] = { 1, 1, 2, 2, 3, 9}; // elements of the array
+// finding the size of the array using sizrof operator
+int array_size = sizeof(array) / sizeof(int);
+// variable to store the xor of all the values
+int xor_value = 0;
+
+// finding xor of all the values of the array
+for(int i = 0; i < array_size; ++i) {
+    xor_value ^= array[i];
+}
+
+// temp variable to find the first set bit from right side (LSB side)
+int temp = 0;
+while( xor_value > 0) {    
+    if (xor_value & 1) // AND operation with last bit to check if it is set or not
+        break;
+    
+    temp++; // increasing the counter
+    xor_value >>= 1; // right shifting the number i.e (110) ==> (11)
+}
+
+int mask = 1 << temp; // creating  mask for the bit where we have found the first set bit in the xor value
+int num1 = 0, num2 = 0;
+
+for(int i = 0; i < n; ++i) {
+    // here we performing xor on numbers differently based on the set bit present in the mask or not
+    // that is set bit is there at temp position
+    // we do xor with num1 else with num2
+    if ((( array[i]&mask ) >> temp) & 1) num1 ^= array[i];
+    else num2 ^= array[i];
+}
+
+// finally printing the numbers
+cout << num1 << " " << num2 << endl; 
+```
+
+Given array [ 7, 7, 3, 4, 2, 4, 3, 3, 4, 7] all numbers except one is occuring thrice we need to find that number in the array.
+If we add the binary positions of the bits [ 111 + 111 + 011 + 100 + 010 + 100 + 011 + 011 + 100 + 111] = 676.
+676 % 3 = 010 (which is binary representation of the 2) 
+we can convert this to decimal by 0*(2^2) + 1*(2^1) + 0*(2^0).
+
+```cpp
+
+int arr[] = { 7, 11, 3, 4, 9, 4, 3, 3, 4, 7, 9, 9, 7};
+int arr_size = sizeof(arr)/sizeof(int);
+
+int count[32] = {0};
+// count array to store occurences of each bit at particular position
+
+for(int i = 0; i < arr_size; ++i) {
+    int cur = arr[i]; // storing the current element
+    int pos = 0; // variable to store current position
+
+    while(cur > 0 ) {
+        if (cur & 1) 
+            count[pos]++; // incrementing count of the set bit position
+        
+        pos++; // incrementing the value of position
+        cur >>= 1; // performing right shift on the number
+    }
+}
+
+int answer  = 0;
+for(int i = 0; i < 32; ++i )
+    answer += pow(2,i) * (count[i] % 3);
+
+cout << answer << endl;
+```
+
+## Calculating Number of Set Bits
+
+```cpp
+
+int countBits(int n) {
+
     int count = 0;
-    while (n > 0)
-    {
-        count += (n&1);
-        n = n>>1;
+    while (n > 0) {
+        count += ( n&1 ); // n&1 is 1 only when LSB is 1
+        n >>= 1; // performing right shift
     }
     return count;
+}
 
-    //Time: O(number of set bits)
-    int count = 0;
-    while(n)
-    {
-        ++count;
-        n = n&(n-1);
+// other way of counting set bits
+int countBits(int n) {
+    int count  = 0;
+
+    while(n) {
+        count++;
+        n = n & (n-1);
     }
+    return count;
+}
 
-    // __builtin_popcount(n); or __builtin_popcountl or __builtin_popcountll
+// using builtin function
+int countBits(int n) {
+    return (int)__builtin_popcount(n);
+}
+
+```
+
+## Count Number Of Bits
+
+```cpp
+
+// using logarithm
+int totalBits(int n) {
+    return (int)log2(n) + 1;
+}
+
+// by using the bit traversal
+int totalBits(int n) {
+    int count = 0;
+    
+    while(n) {
+        count++;
+        n >>= 1;
+    }
+    return count;
 }
 ```
 
-### Get Set Clear ith bit
+## Check Parity
+
+* Parity of a number refers to number of 1's in the binary format of the number.
+* If it contains odd number of ones then it is odd parity
+* If it contains even number of ones then it is even parity
+* In C++ there is builtin function which returns 1 for odd parity and 0 for even parity
 
 ```cpp
-int getIthBit(int n, int i)
-{
-    return (n&(1<<i)) == 0 ? 0 : 1;
-}
-void setIthBit(int &n, int i)
-{
-    n = n|(1<<i);
-}
-void clearBit(int &n, int i)
-{
-    n = n&(~(1<<i));
+#include<bits/stdc++.h>
+using namespace std;
+
+int checkParity(int n) {
+    return __builtin_parity(n);
 }
 
-#define has_bit(bit_mask, x) ((bit_mask) & (1ULL << (x)))
+int main() {
+    int n;
+    cin >> n;
+
+    if (checkParity(n)) {
+        cout << "Odd Parity" << endl;
+    }
+    else {
+        cout << "Even Parity" << endl;
+    }
+}
+```
+
+## Count Number of Leading Zeros
+
+* Example binary of 16 is 00000000 00000000 00000000 00010000
+* It has 27 leading zeros ( as we discussed int is 32 bit all the leading ones are filled with 0 )
+
+```cpp
+
+int leadingZeros(int n) {
+    return (int)__builtin_clz(n);
+}
+```
+
+### Similarily we have function to count the trailing zeros
+
+```cpp
+int trailingZeros(int n) {
+    return (int)__builtin_ctz(n);
+}
+```
+
+### Pro Tip
+
+* You can calculate 2 power something using left shift operator
+
+```cpp
+
+int power(n) {
+    return 1 << n;
+}
+```
+
+> Example
+> 2 power 3 is 8 which is 1000
+> 1 << 3 is ( 1 left shifted 3 times ) = 1000
+
+* This trick can be used not only for power but also for multiplying and dividing by 2
+
+```cpp
+int multiply(int x) {
+    return x << 1;
+}
+
+int divide(int x) {
+    return x >> 1;
+}
+```
+
+* Finding log to the base 2 of a 32 bit integer
+
+```cpp
+int log2(int x) {
+
+    int result = 0;
+    while( x >>= 1 ) {
+        result++;
+    }
+    return result;
+}
+```
+
+> **Logic:-** We right shift x repeatedly until it becomes 0 mean while we keep count on the shift operations. 
+> This count value is the value of log to the base 2
+
+## Get, Set & Clear ith bit
+
+```cpp
+int getIthbit(int n, int i) {
+    return ( n & ( 1 << i) ) == 0 ? 0 : 1;
+}
+
+void setIthBit(int n, int i) {
+    n = n | (1 << i);
+}
+
+void clearIthBit(int n, int i) {
+    n = n & ( ~(1 << i));
+}
+
+#define has_bits(bit_mask, x) ((bit_mask) & (1ULL << (x)))
 #define turn_on_bit(bit_mask, x) (bit_mask |= (1ULL << (x)))
-#define turn_off_bit(bit_mask, x) (bit_mask &= (~(1ULL << (x))))
-#define smallest_on_bit(bit_mask) (__builtin_ctzint((bit_mask) & (-(bit_mask))))
+#define turn_off_bit(bit_mask, x) (bit_mask &= (~( 1ULL << (x))))
+#define smallest_on_bit(bit_mask) (__builtin_ctz(int)((bit_mask) & (~(bit_mask))))
 ```
 
-### Hamming Distance
+## Hamming Distance
 
-hamming\(a,b\) between two strings a and b of equal length is the number of positions where the strings differ
+Hamming distance is a metric for comparing two binary data strings. While comparing two binary strings of equal length, Hamming distance is the number of bit positions in which the two bits differ
 
 ```cpp
-// Naive way
-int hamming(string a, string b)
-{
-    int d = 0;
-    for (int i = 0; i < k; i++)
-        if (a[i] != b[i]) d++;
-    return d;
+// If the input is in string format the we can use below code snippet
+
+int hammingDistance(string a, string b) {
+    // assuming both strings are of equal length
+    // their length is k
+    int answer = 0;
+
+    for(int i = 0; i < k; i++) {
+        if (a[i] != b[i]) answer++;
+    }
+    return answer;
 }
-/* Given a list n bit strings of length k, time complexity will be O(n^2 k)
-If k is small we can store it as integers and calculating hamming distance */
-int hamming(int a, int b) { return __builtin_popcount(a^b); }
+
+// If the input is in the form of numbers then XOR operation can be used 
+
+int hammingDistance(int a, int b) {
+    return __builtin_popcount(a^b);
+}
 ```
 
-### Counting Subgrids
+## Counting Sub Grids Problem
 
-![Given a binary grid, count how many subgrid have corners \(4 corners\) as 1](.gitbook/assets/image%20%2886%29.png)
+![Given a binary grid, count how many subgrid have corners \(4 corners\) as 1](https://ieee.nitk.ac.in/blog/assets/img/Bit-Manipulation/grid2.png)
+
+Given an n x n grid whose each square is either black (1) or white (0), calculate the number of subgrids whose all corners are black
+
+
+There is a O(n^3) time algorithms for solving the problem; i.e go throgh all the n^2 pairs of rows and for each pair (a,b) calculate the number of columns that contains a black square in both rows in O(n) time
 
 ```cpp
-/* Naive O(n^3) approach, picks 2 rows i & j then iterate all
-columns and check if all corners are 1 */
-for (int i = 0; i < n; ++i)
-    for (int j = 0; j < n; ++j)
-        for (int k = 0; k < m; ++k)
+// Naive approach, picks 2 rows i & j then iterate all
+// columns and check if all corneres are 1
+
+for(int i  = 0; i < n; i++) {
+    for(int j = 0; j < n; j++) {
+        for(int k = 0; k < m; k++) {
             if (grid[i][k] == 1 && grid[j][k] == 1) count++;
+        }
+    }
+}
 
-/* Bit Optimization O(n^3 / N) appraoch, continuing same idea of above we can
-reduce internal for loop of N by dividing the grid into block of columns such
-that each block consist of N consecutive columns. Then each row is stored as
-a list of k-bit numbers */
-for (int k = 0; k <= n/N; ++i)
-    count += __builtin_popcount(grid[i][k] & grid[j][k]);
+// complete functional snippet of above one is
 
-/*  a random grid of size 2500×2500 and compared the original and bit optimized
-implementation. While the original code took 29.6 seconds, the bit optimized
-version only took 3.1 seconds with N = 32 (int numbers) and 1.7 seconds with
-N = 64 (long long numbers) */
+int count_subgrid(const int **color, int n) {
+    int subgrids = 0;
+    for(int a = 0; a < n; a++) {
+        for(int b = a+1; b < n; b++) { // loop over pairs(a,b)of rows
+            int count = 0;
+            for(int i = 0; i < n; i++) { // loop over all columns
+                if (color[a][i] == 1 && color[b][i] == 1) {
+                    count++;
+                }
+            }
+            subgrids += ((count-1) * count)/2;
+        }
+    }
+    return subgrids;
+}
+
 ```
 
-### Super awesome technique to handle binary indexing
+Bit optimization O(n^3/N) appraoch, continuing same idea of above we can reduce internal for loop of N by dividing the grid into block of columns such that each block consist of N consecutive columns. Then each row is stored as a list of K-bit numbers.
+
+```cpp
+for(int k = 0; k <= n/N; ++i) {
+    count += __builtin_popcount(grid[i][k] & grid[j][k]);
+}
+
+/* a random grid of size 2500 x 2500 and compared the original bit optimized implementation.
+While the original code took 29.6 seconds, the bit optimized version only took 3.1 seconds with N = 32 (int number) and 1.7 second with N = 64 (long long numbers) */
+```
+
+## Awesome technique to handle binary indexing
 
 ```cpp
 /*
-Say we are given a vector of pairs with start and end value. And also given
-a data in form of binary (void*) we need to clip it (start, end) for each
-i present in the vector.
+Say we are given a vector of pairs with start and end value. And also given 
+a data in form of binary (void *) we need to clip it (start, end) for each
+i present in the vector
 
-Easy way to do it will be take a mask of 1s at that place and OR it with
+Easy way to do it will be take a mask of 1st at that place and OR it with 
 data.
--1 is all 1s do shifting for final mask
-((-1) << (start))              its    11111000
-((-1) >> (end - start + 1))    its    00111111
-and both of them we will get mask     00111000
+-1 is all 1's do shifting for final mask
+i.e -1 is binary is 11111111
+((-1) << (start))           its (assuming start is 3)  11111000
+((-1) >> (end - start + 1)  its (assuming end is 6)    00111111
+AND both of them we will get mask                      00111000
 
-But you know what this is bullshit XD a way easier solution is create an
-array of this struct
+But there is also a easier solution by creating an array of this struct
 */
-struct myStruct
-{
-    int x : (3 * 8);
+
+struct myStruct {
+    int x: ( 3 * 8 );
     // This will automatically reserve continuous 24 bits or 3 bytes
+
+    // when we represent int var_name: some digit
+    // then we are confining that var to digit number of bits
 };
 ```
 
-### Insertion
+## Insertion
 
-You are given two 32-bit numbers N, M and two bit positions i and j. Write a method to insert M into N such that M starts at bit j and ends at bit i. You can assume that the bits j through i have enough space to fit all of M. That is if M = 10011, you can assume that there are at least 5 bits between j and i. You would not , for example, have j = 3 and i = 2, because M could not fully fit between bit 3 and bit 2.
+You are given two 32-bit numbers N, M and two bit positions i and j. Write a method to insert M into N such that M starts at bit j and ends  at bit i. You can assume that the bits j through i have enough space to fit all of M. That is if M = 10011, you can assume that there are atleast 5 bits between i and j. You will not get any example as j = 3 and i = 2, because M could not fully fit between bit 3 and bit 2.
 
-Example: N = 10000000000, M = 10011, i = 2, j = 6  
+Example: N = 10000000000, M = 10011, i = 2 and j = 6
 Output: 10001001100
 
-```text
-Create a mask like this 1111100000111111 then and it with n
-then shift m i bits <<
-Then n | m will be ans
-```
+> Create a mask like 1111100000111111, after  that AND it with N
+> Above step is to make bits in between i and j 0 and keep remaining same
+>
+> Then perform left shift on M , i times so that the bits of M reach the correct position
+>
+> Finally N | M (N OR M) will be the answer
 
-### Binary to String
+## Binary String
 
-Given a real number between 0 and 1 \(e.g. 0.72\) that is passed in as a double, print the binary representation. If the number cannot be represented accurately in binary with at most 32 characters, print 'ERROR'
+Given a real number between 0 and 1 (e.g 0.72) that is passed in as a double, print the binary representation. If the number cannot be represented accurately in binary with at most 32 characters, then print ERROR
 
 ```cpp
-/* Say given 0.875 = 1*(2^-1) + 0*(2^-2) + 1*(2^-3)
-So in binary it becomes 0.101*/
-void printBinaryFloat(double num)
-{
-    assert(num >= 0 && num <= 1);
+/*
+Suppose the given number is 0.875 = 1*(2^-1) + 0*(2^-2) + 1*(2^-3)
+so in binary it becomes 0.101
+*/
+
+void printBinaryFloat(double num) {
+
+    assert(num >= 0 && num <= 1)
     string res = "0.";
-    while (num)
-    {
-        if (res.size() > 32) { cout << "ERROR!\n"; return; }
-        double x = num*2;
-        if (x >= 1) { res += '1'; num = r - 1; }
-        else { res += '0'; num = r; }
+
+    while(num) {
+        if (res.size() > 32) {
+            cout << "ERROR";
+            return;
+        }
+        double x = num * 2;
+        if (x >= 1) {
+            res += '1';
+            num = x - 1;
+        }
+        else {
+            res += '0';
+            num = x;
+        }
     }
-    cout << res << '\n';
+    cout << res << endl;
 }
 ```
 
-### Flip Bit to Win
+## Flip Bit To Win
 
-You have an integer and you can flip exactly one bit from a 0 to 1. Write code to find the length of longest sequence of 1s you could create.
+You have an integer and you can flip exactly one bit from a 0 to 1. Write a code to find the length of longest sequenceof 1s you could create 
 
-Input: 1775 \(11011101111\)  
+Input: 1775 (11011101111)
 Output: 8
 
 ```cpp
-/* Easy solution is we create a prefSum from both side. Then iterate
+/*
+Easy solution is we create a prefSum from both side. Then iterate
 bitstring if 0 comes we will basically try to flip it and max
-there will be prefL[i-1] + 1 + prefR[i+1] */
+there will be prefL[i-1] + 1 + prefR[i+1]
 
-/* Better approach is create (ex testacse):
-[0, 4, 1, 3, 1, 2, 21] this array it starts for 0 (right to left
-in binary) we have 0 zeroes then 4 ones then 1 zero then 3 ones
-then 1 zero then 2 ones. */
+Better Approach
+[ 0, 4, 1, 3, 1, 2, 21] this array it starts for 0 ( right to left
+in binary) we have 0 zeors, then we have 4 ones, then 1 zero, then 3 ones, then 1 zero and 2 ones
+last is just 32 - number of bits used 
+*/
 
-int longestSeq(int n)
-{
-    vector<int> seq;
+int longestSequence(int n) {
+    
+    vector<int> sequence;
     bool onesTurn = false;
-    int cnt = 0;
-    while (n)
-    {
-        if (onesTurn ^ (n&1))
-        {
-            seq.push_back(cnt);
+    int count = 0;
+
+    while(n) {
+        // this loop will create the sequence vector as discusseded above
+        if (onesTurn ^ (n&1)) {
+            sequence.push_back(count);
             onesTurn = !onesTurn;
-            cnt = 1;
+            count = 1;
         }
-        else cnt++;
+        else {
+            count++;
+        }
         n >>= 1;
     }
-    if (cnt) seq.push_back(cnt);
-    seq.push_back(32 - accumulate(seq.begin(), seq.end(), 0));
-    
-    int res = 0;
-    for (int i = 0; i < seq.size(); i += 2)
-    {
-        if (seq[i] == 1)
-        {
+
+    if (count) sequence.push_back(count);
+    sequence.push_back(32 - accumulate(sequence.begin(), sequence.end(), 0));
+
+    int result  = 0;
+    // now we are looping through the sequence vector
+    // here we are only checking the positions where we have 
+    // stored the count of 0
+    for(int i = 0; i < sequence.size(); i += 2) {
+        // if count of 0 is 1 then add its previous and next value
+        if (sequence[i] == 1) {
             int cur = 1;
-            if (i-1 >= 0) cur += seq[i-1];
-            if (i+1 < seq.size()) cur += seq[i+1];
-            res = max(res, cur);
+            if (i-1 >= 0) cur += sequence[i-1]; 
+            if (i+1 < sequence.size()) cur += sequence[i+1];
+            result = max(result,cur);
         }
     }
-    return res;
+    return result;
 }
 
-/* We can reduce O(N) space to O(1) idea is we only need 3 states
-so do both task in one iteration while mainting only 3 states. */
+/*
+Here we can reduce the O(N) space to O(1) idea is we only need 3 states
+so do both task in one iteration while mainting only 3 states 
+*/
+
+// There is a small disadvantage in the above code
+// It works only when there is one 0 is present between two sets of 1
+
+// This can be overcomes by tweaking the above code little bit
+
+int result = 0;
+
+// traversing the sequence array or in this case vector
+for(int i = 0; i < sequence.size(); i += 2 )
+{
+    // if there is only one zero add previous count of 1 and next count of 1
+    if (sequence[i] == 1) {
+        int cur = 1;
+        if (i-1 >= 0) cur += sequence[i-1];
+        if (i+1 < sequence.size()) cur += sequence[i+1];
+        result = max(result,cur);
+
+    }
+
+    else if (sequence[i] > 1 ){
+        int cur = 1;
+        // suppose sequence vector is
+        // [4 ones, 3 zeros, 5 ones]
+        if ( i - 1 >= 0 ) result = max(result, cur + sequence[i-1]);
+        // that is max of current result and 1 + prev count of 1
+        if ( i + 1 <= sequence.size()) result = max(result, cur + sequence[i+1]);
+        // that is max of current result and 1 + next count of 1
+        // Here we are adding 1 because we are only allowed to flip one bit
+    }
+}
+
+cout << result << endl;
+
 ```
 
-### Closest smaller and greater numbers with same number of set bits
+## Closest smaller and greater number with same number of set bits
 
-Given a positive integer, print the next smallest and the next largest number that have the same number of 1 bits in their binary representation.
+Given a positive integer, print the next smallest and the next largest number that have the same number of 1 bits in their binary representation
 
 ```cpp
-/* Next number: Find rightmost unset bit, and set it
-Prev number: Find rightmost set bit, unset it and set all before
+/*
+Next Number: Find the right most unset bit,set it and all the bits right to that must be flipped
+i.e if the number is 13 (1101) for next number if change 2 bit to 1 and all the bits next to it are flipped 14 (1110)
 
-but we have to also maintain set bits count, so if we flip a set to
-unset to compensate we must do vice versa to some other bit.
+Prev Number: Find the right most set bit, unset it and set all before
 
-(Next Greater)
-> Flip right most non-trailing zero
+Here we need to remember that we should also keep the count of set bits after flipping them
+
+(next greater with same no of set bits)
+> Flip the right most non-trailing zero
 eg: 11011001111100
     11011011111100
-> Clear bits to the right
+> Now clear bits to the right of it
     11011010000000
-> Maintain set bit cnt from right size
+> Maintain set bit count from right side
     11011010001111
 
-(Prev Smaller)
-> Flip right most non-trailing one
+(prev smaller with same no of set bits)
+> Flip the right most non-trailing one
 eg: 10011110000011
     10011100000011
-> Clear bits to the right
+> Clear the bits to the right of it
     10011100000000
-> maintain count from left of chosen point (in step 1)
-    10011101110000 */
+> Maintain count from left of chosen point in step 1
+    10011101110000
+*/
 
-// More optimized approach (TODO explanation)
-void getNext(int x)
-{
-    int cntZeroes = 0, cntOnes = 0, cur = x;
-    while (cur && !(cur&1)) // cnts no of trailing zeroes
-        cntZeroes++, cur >>= 1;
-    while (cur&1) // cnts immediate one set block
-        cntOnes++, cur >>= 1;
-    
-    if (cntZeroes+cntOnes == (8*sizeof(x)-1) || cntZeroes+cntOnes == 0)
+// Optimized code for the problem 
+void getNext(int x) {
+    int countZero = 0, countOne = 0, cur = x;
+
+    while(cur && !(cur&1)) { // count no of trailing zeros
+        countZero++;
+        cur >>= 1;
+    }
+
+    while(cur&1) { // counts the immediate block of set bits
+        countOne++;
+        cur >>= 1;
+    }
+
+    if(countZero + countOne == (8*sizeof(x)-1)) {
         return -1;
-    
-    return (x + (1<<cntZeroes) + (1<<(cntOnes - 1)) - 1);
+    }
+
+    return ( x + ( 1 << countZero) + ( 1 << (countOne -1)) -1);
 }
-void getPrev(int x)
-{
-    int cntZeroes = 0, cntOnes = 0, cur = x;
-    while (cur&1) cntOnes++, cur >>= 1;
-    if (cur == 0) return -1;
-    while (cur && !(cur&1)) cntZeroes++, cur >>= 1;
+
+void getPrev(int x) {
+    int countZero = 0, countOne = 0, cur = x;
     
-    return (x - (1<<cntOnes) - (1<<(cntZeroes - 1)) + 1);
+    while(cur&1) {
+        countOne++, cur >>= 1;
+    }
+
+    if (cur == 0){
+        return -1;
+    }
+
+    while(cur && !(cur&1)) {
+        countZero++, cur >>= 1;
+    }
+
+    return (x - ( 1 << countOne) - ( 1 << (countZero-1)) + 1);
 }
+
 ```
 
-### Debugger
+## Debugger
 
-Explain what the following code does: \(\(n & \(n-1\)\) == 0\)
+Explain what the following code does: (n & (n-1)) == 0
 
-```text
+```
 n & (n-1) == 0
-means that n and (n-1) never have a common set bit
+it means that n and n-1 doesn't have any common set bit
 
-say n is 1101011000
-        -         1
-       --------------
-         1101010111
-so first set bit from right gets unset and all before gets set.
+it is generally used to check whether n is power of 2 or not
 
-so and of them == 0 means that the number is power of 2
+similarily we can check n is power of 4 or not by checking
+
+(n & (n-1)) == 0 && (n&0xAAAA) == 0)
+here is A is hexadecimal 1010 where 1 is present at every even position
+where as in power of 4 , there should be only one set bit that too in the odd position
 ```
 
-### Conversion
+## Conversion
 
-Write a function to determine the number of bits you would need to flip to convert invert A to integer B.
-
-```text
-built_in_popcount(A ^ B)
-```
-
-### Pairwise Swap
-
-Write a program to swap odd and even bits in an integer with as few instructions as possible \(e.g. bit 0 and bit 1 are swapped, bit 2 and bit 3 are swapped and so on\).
+Write a function to determine the number of bits you would need to flip to convert A to integer B
 
 ```cpp
-int solve(int x)
-{
-    return ((x & 0xaaaaaaaa) | (x & 0x55555555));
-    // 0xaaaaaaaa in bin -> 1010 1010 1010 1010 1010 1010 1010 1010
-    // 0x55555555 in bin -> 0101 0101 0101 0101 0101 0101 0101 0101
-}
+__builtin_popcount(A^B);
 ```
 
-### Draw Line
+## Pairwise Swap
 
-A monochrome screen is stored as a single array of bytes, allowing eight consecutive pixels to be stored in one byte. The screen has width w, where w is divisible by 8 \(that is, no byte will be split across rows\). The height of the screen, of course, can be derived from the length of the array and the width. Implement a function that draws a horizontal line from \(x1, y\) \(x2, y\).  
-The method signature should look something like:  
+Write a program to swap odd and even bits in an integer with as few instructions as possible.
+e.g bit 0 and bit 1 are swapped, bit 2 and bit 3 are swapped and so on
+
+```cpp
+
+int solve(int x) {
+    return (( x & 0xaaaaaaaa) | ( x & 0x55555555));
+    // 0xaaaaaaaa in bin -> 1010 1010 1010 1010 1010 1010 1010 1010
+    // 0x55555555 in bin -> 0101 0101 0101 0101 0101 0101 0101 0101
+
+```
+
+## Draw Line
+
+A monochrome screen is stored as a single array of bytes, allowing eight consecutive pixels to be stored in one byte. The screen has width w, where w is divisible by 8(that is, no byte will be split across rows). The height of the screen, of course, can be derived from the length of the array and the width. Implement a function that draws a horizontal line from (x1, y) (x2, y).
+the method signature should look  something like:
+
 `drawLine(byte[] screen, int width, int x1, int x2, int y)`
 
 ```cpp
-/* Naive way is iterate (x1, x2) in yth row and set the pixel
-we can optimize it by setting entire 8 bytes 0xFF if the gap is
-large. */
+/*
+Naive approach is ofcourse iterate (x1, x2) in yth row and set the pixel
+we can optimize it by setting entire 8 bytes 0xFF if the gap is large
+*/
 
-void drawLine(byte[] screen, int width, int x1, int x2, int y)
-{
-    int startOffset = x1%8, firstFullByte = x1/8;
+void drawLine(byte[] screen, int width, int x1, int x2, int y) {
+    int startOffset = x1%8;
+    int firstFullByte = x1/8;
     if (startOffset != 0) firstFullByte++;
-    int endOffset = x2%8, lastFullByte = x2/8;
-    if (endOffset != 0) endFullByte++;
-    
-    for (int i = firstFullByte; i <= lastFullByte; ++i)
+
+    int endOffset = x2%8;
+    int lastFullByte = x2/8;
+    if (endOffset != 0) lastFullByte++;
+
+    for(int i = firstFullByte; i <= lastFullByte; ++i) {
         screen[(width/8)*y + i] = (byte)0xFF;
-    
+    }
+
     byte startMask = (byte)(0xFF >> startOffset);
     byte endMask = (byte)~(0xFF >> endOffset);
-    
+
     if (x1/8 == x2/8) // x1 and x2 are same byte
         screen[(width/8)*y + (x1/8)] |= (byte)(startMask & endMask);
-    else
-    {
-        if (startOffset != 0)
-            screen[(width/8)*y + firstFullByte - 1] |= startMask;
+    
+    else {
+        if (startOffset != 0) 
+            screen[(width/8)*y + firstFullByte - 1] |=startMask;
+        
         if (endOffset != 7)
             screen[(width/8)*y + lastFullByte + 1] |= endMask;
     }
 }
 ```
-
 ### [Bitwise AND of numbers in range](https://leetcode.com/problems/bitwise-and-of-numbers-range/)
 
 ```cpp
-int rangeBitwiseAnd(int m, int n)
-{
+
+int rangeBitwiseAnd(int m, int n) {
     int res = 0;
-    for (int i = 31; i >= 0; --i)        
-    {
-        bool p = (m>>i)&1, q = (n>>i)&1;
+    for(int i = 31; i >= 0; i--) {
+        bool p = (m >> i), q = (n >> i) & 1;
         if (!p && !q) continue;
-        if (p && q) res += (1<<i);
+        if (p && q) res += ( 1 << i );
         else break;
     }
+
     return res;
 }
-```
 
+// another way of writing above function is
+
+int rangeBitwiseAnd(int m, int n) {
+    int answer = 0;
+    for(int bit = 30; bit >= 0; bit--) {
+        // here we have ignored the sign bit thats why loop is from 30
+
+        if (m & (1 << bit) != (n & (1 << bit))) {
+            break;
+        }
+        else {
+            answer |= (m & (1 << bit));
+        }
+    }
+    return answer;
+}
+
+```
