@@ -382,6 +382,7 @@ public:
 * Sort numbers find median, we can maintain sorted array while addNum it will take O\(logN\) time in lower\_bound and worst case all numbers have to be shifted so O\(NlogN\)
 
 ```cpp
+// Avg case logN, but worst case linear
 vector<int> arr;
 int sz = 0;
 MedianFinder() { }
@@ -394,6 +395,25 @@ void addNum(int num)
 double findMedian()
 {
     return sz&1 ? arr[sz/2] : (arr[sz/2 + 1] + arr[sz/2])/2.0;
+}
+
+// O(logN) using 2 heaps
+priority_queue<int> l;
+priority_queue<int, vector<int>, greater<int>> r;
+void addNum(int num)
+{
+    l.push(num);
+    r.push(l.top());
+    l.pop();
+    if (l.size() < r.size())
+    {
+        l.push(r.top());
+        r.pop();
+    }
+}
+double findMedian()
+{
+    return l.size() > r.size() ? l.top() : ((double) l.top() + r.top()) * 0.5;
 }
 ```
 
@@ -517,7 +537,62 @@ public:
 };
 ```
 
-### [Encode and Decode Strings](https://www.lintcode.com/en/old/problem/encode-and-decode-strings/#:~:text=Encode%20and%20Decode%20Strings,-Description&text=Design%20an%20algorithm%20to%20encode,the%20original%20list%20of%20strings.)
+### Read N Characters Given Read4
+The API: int read4(char *buf) reads 4 characters at a time from a file.
+The return value is the actual number of characters read. For example, it returns 3 if there is only 3 characters left in the file.
+By using the read4 API, implement the function int read(char *buf, int n) that reads n characters from the file.
+Note: The read function will only be called once for each test case.
+```c++
+int read(char *buf, int n)
+{
+    int index = 0;
+    char r4[4];
+    while (index < n)
+    {
+        int c = read4(r4);
+        for (int i = 0; i < c && index < n; ++i)
+            buf[index++] = r4[i];
+        if (c < 4) break;
+    }
+    return index;
+}
+```
+
+### Read N Characters Given Read4 - Call Multiple Times
+```c++
+/* Previously it was called only once so:
+    "filetestbuffer"
+    read(6)
+    read(5)
+
+Gives output: [6, buf = "filete"] [5, buf = "buffe"]
+which is incorrect, now we want output as: [6, buf = "filete"] [5, buf = "stbuf"] */
+
+queue<char> q;
+int read(char *buf, int n)
+{
+    int index = 0;
+    while (!q.empty() && index < n)
+    {
+        buf[index++] = q.front();
+        q.pop();
+    }
+    if (index == n) return n;
+    char r4[4];
+    while (index < n)
+    {
+        int c = read4(r4);
+        int i = 0;
+        for (; i < c && index < n; ++i)
+            buf[index++] = r4[i];
+        while (i < c) q.push(r4[i++]);
+        if (c < 4) break;
+    }
+    return index;
+}
+```
+
+### [Encode and Decode Strings](https://www.lintcode.com/problem/encode-and-decode-strings/description)
 
 ```cpp
 class Solution {
@@ -791,6 +866,108 @@ public:
         return curFood;
     }
 };
+```
+
+### [Text Editor]
+```c++
+class textEditor
+{
+private:
+    stack<char> leftStk, rightStk;
+
+public:
+    void insertWord(char word[])
+    {
+        int i = 0;
+        while (word[i] != '\0')
+            insertCharacters(word[i++]);
+    }
+    void insertCharacters(char character)
+    {
+        leftStk.push(character);
+    }
+    bool deleteCharacter()
+    {
+        if (rightStk.empty()) return false;
+        else rightStk.pop();
+        return true;
+    }
+    bool backSpaceCharacter()
+    {
+        if (leftStk.empty()) return false;
+        else leftStk.pop();
+        return true;
+    }
+    void moveCursor(int position)
+    {
+        int leftSz = leftStk.size(), rightSz = rightStk.size();
+        if (position < leftSz) moveLeft(position);
+        else moveRight(position - leftSz);
+    }
+    void moveLeft(int position)
+    {
+        int leftSz = leftStk.size();
+        while (position != leftSz)
+        {
+            rightStk.push(leftStk.top());
+            leftStk.pop();
+            leftSz--;
+        }
+    }
+    void moveRight(int cnt)
+    {
+        int rightSz = rightStk.size(), i = 1;
+        if (cnt > rightSz) cout << "Cannot move the cursor, right, to the specified position\n";
+        else
+        {
+            while (i <= cnt)
+            {
+                leftStk.push(rightStk.top());
+                rightStk.pop();
+                i++;
+            }
+        }
+    }
+    void findAndReplaceChar(char find, char replace)
+    {
+        int cnt = 1, originalCharPos = leftStk.size();
+        moveCursor(0);
+        while (!rightStk.empty())
+        {
+            if (rightStk.top() == find)
+            {
+                deleteCharacter();
+                insertCharacters(replace);
+            }
+            else moveCursor(cnt++);
+        }
+        moveCursor(originalCharPos);
+    }
+    void print()
+    {
+        int cnt = 1, originalCharPos = leftStk.size();
+        moveCursor(0);
+        while (!rightStk.empty())
+        {
+            cout << rightStk.top();
+            moveCursor(cnt++);
+        }
+        moveCursor(originalCharPos);
+        cout << '\n';
+    }
+};
+
+int main()
+{
+    textEditor editor;
+    editor.insertWord("Ankit"); editor.insertWord(" Priyarup"); editor.insertWord(" is"); editor.insertWord(" a"); editor.insertWord(" good"); editor.insertWord(" boy!");
+    editor.insertCharacters(' '); editor.insertCharacters(':'); editor.insertCharacters(')');
+    editor.print();
+    editor.moveCursor(0);
+    editor.insertWord("AP, ");
+    editor.print();
+    return 0;
+}
 ```
 
 ### [Time Based Key Value Store](https://leetcode.com/problems/time-based-key-value-store/)

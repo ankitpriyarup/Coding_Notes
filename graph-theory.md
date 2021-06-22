@@ -386,6 +386,42 @@ TreeNode* Solution::invertTree(TreeNode* root)
 }
 ```
 
+### [Flip Equivalent Binary Tree](https://leetcode.com/problems/flip-equivalent-binary-trees/)
+```c++
+bool flipEquiv(TreeNode* root1, TreeNode* root2)
+{
+    if (!root1 && !root2) return true;
+    if (root1 && root2 && root1->val == root2->val)
+    {
+        return (flipEquiv(root1->left, root2->left) && flipEquiv(root1->right, root2->right)) ||
+            (flipEquiv(root1->left, root2->right) && flipEquiv(root1->right, root2->left));
+    }
+    return false;
+}
+```
+
+### [Populate Next Right Pointers in each node](https://leetcode.com/problems/populating-next-right-pointers-in-each-node/)
+```c++
+Node* connect(Node* root)
+{
+    if (!root) return NULL;
+    queue<Node*> q;
+    q.push(root);
+    while (!q.empty())
+    {
+        int sz = q.size();
+        for (int i = 0; i < sz; ++i)
+        {
+            Node *cur = q.front(); q.pop();
+            cur->next = (i == sz-1) ? NULL : q.front();
+            if (cur->left) q.push(cur->left);
+            if (cur->right) q.push(cur->right);
+        }
+    }
+    return root;
+}
+```
+
 ### Symmetric Tree
 
 ```cpp
@@ -607,6 +643,34 @@ public:
         return st.top();
     }
 };
+
+// Construct BST from sorted linked list
+// O(NlogN) solution
+ListNode* findMiddle(ListNode* head)
+{
+    ListNode *prev = NULL, *slow = head, *fast = head;
+    while (slow && fast && fast->next)
+    {
+        prev = slow;
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    if (prev) prev->next = NULL;
+    return slow;
+}
+TreeNode* sortedListToBST(ListNode* head)
+{
+    if (!head) return NULL;
+
+    ListNode *mid = findMiddle(head);
+    TreeNode *root = new TreeNode(mid->val);
+    if (head == mid) return root;
+    root->left = sortedListToBST(head);
+    root->right = sortedListToBST(mid->next);
+    return root;
+}
+
+// O(N) solution: Form array out of linked list or best use something like Skip List
 ​
 // Construct BST from preorder
 TreeNode* construct(vector<int> &preorder, int l, int r)
@@ -648,6 +712,26 @@ TreeNode* recoverFromPreorder(string S)
     }
     while (st.size() > 1) st.pop();
     return st.top();
+}
+```
+
+### [Binary Tree Longest Consecutive Sequence](https://www.lintcode.com/problem/binary-tree-longest-consecutive-sequence/description)
+```c++
+unordered_map<TreeNode*, int> dp;
+void solve(TreeNode* root, TreeNode* par = NULL)
+{
+    if (!root) return;
+    dp[root] = (par && root->val == par->val+1) ? dp[par]+1 : 1;
+    solve(root->left, root);
+    solve(root->right, root);
+}
+int longestConsecutive(TreeNode* root)
+{
+    dp.clear();
+    solve(root);
+    int res = 0;
+    for (auto &x : dp) res = max(res, x.second);
+    return res;
 }
 ```
 
@@ -756,7 +840,7 @@ public:
 };
 ```
 
-### [Validate BST](https://leetcode.com/problems/validate-binary-search-tree/)
+### [Validate BST / Check BST](https://leetcode.com/problems/validate-binary-search-tree/)
 
 ```cpp
 /* Validate BST
@@ -898,7 +982,8 @@ vector<int> Solution::recoverTree(TreeNode* A)
 
 ```cpp
 // Serialize & Deserialize Binary Tree
-// If BST then very simple, store preorder value
+// If BST then very simple, store preorder value but here it's a general binary tree
+// We can have inorder and preorder, postorder and inorder, or this trick below
 class Codec {
 private:
     /*
@@ -1113,7 +1198,8 @@ public:
 
 ### [Convert BST to Greater Tree](https://leetcode.com/problems/convert-bst-to-greater-tree/)
 
-every key of the original BST is changed to the original key plus sum of all keys greater than the original key in BST.
+- (Same) https://leetcode.com/problems/binary-search-tree-to-greater-sum-tree/
+- every key of the original BST is changed to the original key plus sum of all keys greater than the original key in BST.
 
 ```cpp
 /*
@@ -1400,7 +1486,7 @@ TreeNode * upsideDownBinaryTree(TreeNode * root)
 }
 ```
 
-### [Clone Graph](https://leetcode.com/problems/clone-graph/)
+### [Clone Graph / Duplicate Graph](https://leetcode.com/problems/clone-graph/)
 
 ```cpp
 /*
@@ -1436,6 +1522,29 @@ Node* cloneGraph(Node* node)
 {
     cache.clear();
     return solve(node);
+}
+```
+
+### [Cousins in Binary Tree](https://leetcode.com/problems/cousins-in-binary-tree/)
+```c++
+void findNode(TreeNode* root, int depth, const int target, pair<int, TreeNode*> &toFind,
+                  TreeNode *par = NULL)
+{
+    if (!root) return;
+    if (root->val == target)
+    {
+        toFind = {depth, par};
+        return;
+    }
+    findNode(root->left, depth+1, target, toFind, root);
+    findNode(root->right, depth+1, target, toFind, root);
+}
+bool isCousins(TreeNode* root, int x, int y)
+{
+    pair<int, TreeNode*> X, Y;
+    findNode(root, 0, x, X);
+    findNode(root, 0, y, Y);
+    return (X.first == Y.first && X.second != Y.second);
 }
 ```
 
@@ -1514,6 +1623,35 @@ We can check if a graph is connected by starting at an arbitrary node and findin
 * A graph contains a cycle if during a graph traversal, we find a node whose neighbour \(other than the previous-parent node in the current path\) has already been visited.
 * Another way is to simply calculate the number of nodes and edges in every components. For a component to not contain cycle it must have x nodes and x-1 edges.
 
+### [Find Eventual Safe States](https://leetcode.com/problems/find-eventual-safe-states/)
+We need to find those node which don't form cycle in a given directed graph
+```c++
+const uint8_t UNVISITED = 0, VISITING = 1, VISITED = 2;
+bool dfs(vector<vector<int>>& graph, vector<uint8_t> &dp, int u)
+{
+    dp[u] = VISITING;
+    for (const int v : graph[u])
+    {
+        if (dp[v] == VISITING) return false;
+        if (dp[v] == UNVISITED)
+            if (!dfs(graph, dp, v)) return false;
+    }
+    dp[u] = VISITED;
+    return true;
+}
+vector<int> eventualSafeNodes(vector<vector<int>>& graph)
+{
+    vector<uint8_t> dp(graph.size(), UNVISITED);
+    vector<int> res;
+    for (size_t i = 0; i < graph.size(); ++i)
+    {
+        if (dp[i] == UNVISITED) dfs(graph, dp, i);
+        if (dp[i] == VISITED) res.push_back(i);
+    }
+    return res;
+}
+```
+
 ### Bipartiteness check
 
 The idea is to colour the starting node blue, all its neighbours red, all their neighbours blue, and so on. If at some point of the search we notice that two adjacent nodes have the same colour, this means that the graph is not bipartite.
@@ -1521,14 +1659,15 @@ The idea is to colour the starting node blue, all its neighbours red, all their 
 This algorithm of graph coloring works because of only 2 colors \(choosing whether to paint root as blue or red won't matter\). In general case finding graph coloring is np complete and finding minimum colors reqd is np hard.
 
 ### Finding Bridges
-
+- https://youtu.be/S7fIqu1LgJw
 * A bridge is defined as an edge which, when removed, makes the graph disconnected \(or increase connected components\)
 * O\(E + V\) algorithm
 
 ```cpp
 int timer = 0;
 vector<bool> visited;
-vector<int> tin, low;
+vector<int> tin, low;   // -> tin is time we enter that node (in time helps in maintaing ancesstor parent relation)
+                        // -> low is lowest ancesstor which can be reached from that node
 vector<pii> bridges;
 void DFS(int u, vector<int> adj[], int par = -1)
 {
@@ -1537,7 +1676,7 @@ void DFS(int u, vector<int> adj[], int par = -1)
     for (auto &v : adj[u])
     {
         if (v == par) continue;
-        if (visited[v]) low [u] = min(low[u], tin[v]);
+        if (visited[v]) low [u] = min(low[u], tin[v]);      // back edge, so it cannot be a bridge
         else
         {
             DFS(v, adj, u);
@@ -1652,6 +1791,155 @@ public:
         return iter;
     }
 };
+```
+
+### Bidirectional BFS
+- [Word Ladder](https://leetcode.com/problems/word-ladder/)
+```c++
+// Slow normal BFS
+int ladderLength(string beginWord, string endWord, vector<string>& wordList)
+{
+    int m = beginWord.size();   // since all words are of same length
+    unordered_map<string, vector<string>> preprocess;
+    for (auto x : wordList)
+        for (int i = 0; i < m; ++i)
+            preprocess[x.substr(0, i) + '*' + x.substr(i+1)].push_back(x);
+
+    queue<pair<string, int>> q;
+    q.push({beginWord, 1});
+    unordered_set<string> vis;  // vis to make sure we dont repeat same word
+    vis.insert(beginWord);
+    while (!q.empty())
+    {
+        auto cur = q.front(); q.pop();
+        if (cur.first == endWord) return cur.second;
+        for (int i = 0; i < m; ++i)
+        {
+            string tmp = cur.first.substr(0, i) + '*' + cur.first.substr(i+1);
+            for (auto &nxt : preprocess[tmp])
+            {
+                if (vis.find(nxt) == vis.end())
+                {
+                    vis.insert(nxt);
+                    q.push({nxt, cur.second+1});
+                }
+            }
+        }
+    }
+    return 0;
+}
+// Further optimization Bi directional BFS
+int ladderLength(string beginWord, string endWord, vector<string>& wordList)
+{
+    unordered_set<string_view> rec(wordList.begin(), wordList.end());
+    if (rec.find(endWord) == rec.end()) return 0;
+
+    unordered_set<string_view> s1{beginWord}, s2{endWord};
+    rec.erase(beginWord); rec.erase(endWord);
+
+    int res = 1;
+    while (!s1.empty() && !s2.empty())
+    {
+        /* make sure we always expand the smaller side, thus 
+            reduce the overall size of the 2 predecessor tree */
+        if (s1.size() > s2.size()) swap(s1, s2);
+
+        unordered_set<string_view> tmp;
+        for (const auto word : s1)
+        {
+            string wordCopy = word.data();
+            for (auto &ch : wordCopy)
+            {
+                char orig = ch;
+                for (ch = 'a'; ch <= 'z'; ++ch)
+                {
+                    if (s2.find(wordCopy) != s2.end()) return res+1;
+                    if (rec.find(wordCopy) == rec.end()) continue;
+
+                    const auto it = rec.find(wordCopy);
+                    tmp.insert(*it); rec.erase(*it);
+                }
+                ch = orig;
+            }
+        }
+        s1 = tmp;
+        ++res;
+    }
+    return 0;
+}
+```
+
+### [Open the lock](https://leetcode.com/problems/open-the-lock/)
+```c++
+int openLock(vector<string>& deadends, string target)
+{
+    unordered_set<string> rec(deadends.begin(), deadends.end()), vis;
+
+    queue<string> q;
+    q.push("0000");
+    int cnt = 0;
+    while (!q.empty())
+    {
+        int sz = q.size();
+        while (sz--)
+        {
+            string u = q.front(); q.pop();
+            if (rec.find(u) != rec.end() || vis.find(u) != vis.end()) continue;
+            if (u == target) return cnt;
+            vis.insert(u);
+
+            for (auto &ch : u)
+            {
+                char orig = ch;
+                for (const int dir : {-1, 1})
+                {
+                    ch = (((orig-'0')+dir+10) % 10) + '0';
+                    q.push(u);
+                }
+                ch = orig;
+            }
+        }
+        cnt++;
+    }
+    return -1;        
+}
+
+// Bi directional BFS Optimization
+int openLock(vector<string>& deadends, string target)
+{
+    unordered_set<string> rec(deadends.begin(), deadends.end()), vis;
+    queue<string> q1, q2;
+    unordered_set<string> r1, r2;
+    q1.push("0000"); q2.push(target); r1.insert("0000"); r2.insert(target);
+
+    int cnt = 0;
+    while (!q1.empty() && !q2.empty())
+    {
+        if (q1.size() > q2.size()) swap(q1, q2), swap(r1, r2);
+        int sz = q1.size();
+        while (sz--)
+        {
+            string u = q1.front(); q1.pop();
+            if (rec.find(u) != rec.end() || vis.find(u) != vis.end()) continue;
+            if (r2.find(u) != r2.end()) return cnt;
+            vis.insert(u);
+
+            for (auto &ch : u)
+            {
+                char orig = ch;
+                for (const int dir : {-1, 1})
+                {
+                    ch = (((orig-'0')+dir+10) % 10) + '0';
+                    q1.push(u);
+                    r1.insert(u);
+                }
+                ch = orig;
+            }
+        }
+        cnt++;
+    }
+    return -1;
+}
 ```
 
 [https://codeforces.com/problemset/problem/1294/F](https://codeforces.com/problemset/problem/1294/F)  
@@ -1780,6 +2068,7 @@ signed main()
     for (auto &x : edges) cin >> x.u >> x.v >> x.w;
 
     vec<1, int> dist(n+1, INF), par(n+1, -1);
+    dist[1] = 0;
     int x;
     for (int i = 0; i < n; ++i)
     {
@@ -1878,7 +2167,7 @@ bool spfa(int s, int n, vector<pii> adj[], vector<int> &dist)
 ![](.gitbook/assets/image%20%2890%29%20%281%29.png)
 
 * Priority queue version is O\(E logV\)
-* A remarkable property in Dijkstra’s algorithm is that whenever a node is selected, its distance is final
+* A remarkable property in Dijkstra’s algorithm is that whenever a node is selected, its distance is final.
 
 ```cpp
 void dijkstra(int s, int n, vector<pii> adj[], vector<int> &dist, vector<int> &prev)
@@ -1907,8 +2196,10 @@ void dijkstra(int s, int n, vector<pii> adj[], vector<int> &dist, vector<int> &p
 }
 ```
 
-### 0-1 BFS
+### 0-1 BFS (Zero One BFS)
 
+* https://youtu.be/cMP1IaWuFuM
+* During the execution of BFS, the queue holding the vertices only containing elements from at max two successive levels of the BFS tree.
 * Used in unweighted graph \(or 0-1 weight graph\), performs in O\(E\)
 
 ```cpp
@@ -2059,6 +2350,65 @@ int removeStones(vector<vector<int>>& stones)
     unordered_set<int> res;
     for (const int x : parent) res.insert(findSet(x));
     return n - res.size();
+}
+```
+
+### [Redundant Connection]
+- https://leetcode.com/problems/redundant-connection/
+- https://leetcode.com/problems/redundant-connection-ii/
+```c++
+// Variant - I (Undirected graph)
+vector<int> findRedundantConnection(vector<vector<int>>& edges)
+{
+    parent = vector<int>(edges.size()+1);
+    sz = vector<int>(edges.size()+1, 1);
+    for (int i = 1; i <= edges.size(); ++i) parent[i] = i;
+
+    vector<int> res;
+    for (const auto e : edges)
+    {
+        if (findSet(e[0]) != findSet(e[1])) unionSet(e[0], e[1]);
+        else res = e;
+    }
+    return res;
+}
+
+// Variant - II (Directed graph)
+vector<int> findRedundantDirectedConnection(vector<vector<int>>& edges)
+{
+    parent = vector<int>(edges.size()+1);
+    sz = vector<int>(edges.size()+1, 1);
+    for (int i = 1; i <= edges.size(); ++i) parent[i] = i;
+    
+    vector<int> inDeg(edges.size()+1, 0);
+    int node = -1;
+    for (const auto e : edges)
+    {
+        inDeg[e[1]]++;
+        if (inDeg[e[1]] == 2) { node = e[1]; break; }
+    }
+
+    if (node == -1)     // Directed cycle must be their
+    {
+        for (const auto e : edges)
+        {
+            if (findSet(e[0]) != findSet(e[1])) unionSet(e[0], e[1]);
+            else return {e[0], e[1]};
+        }
+    }
+    else                // There's a node with inDeg 2
+    {
+        int a = -1, b = -1;
+        for (const auto e : edges)
+        {
+            if (e[1] != node) unionSet(e[0], e[1]);
+            else if (a == -1) a = e[0];
+            else b = e[0];
+        }
+        if (findSet(a) == findSet(node)) return {a, node};
+        else return {b, node};
+    }
+    return {};
 }
 ```
 
@@ -2283,7 +2633,7 @@ By product of Dijkstra algorithm is a DAG signifying considered shortest path ed
 
 ![](.gitbook/assets/image%20%28136%29.png)
 
-### Successor Paths
+### Successor Paths / Functional Graph
 
 * Such graphs have outdegree as 1 \(also called functional graph since it defines a function\)
 
@@ -2298,31 +2648,56 @@ In finding succ\(x, k\) it takes O\(k\) time however with preprocessing query be
 // For query, present k as sum of powers of 2 so 11 = 8 + 2 + 1
 // succ(x,11) = succ(succ(succ(x,8),2),1)
 const int MAXN = 2*1e5 + 5;
-vec<2, int> sparseTable(32, MAXN);
+vec<2, int> succ(32, MAXN);
 signed main()
 {
     ios_base::sync_with_stdio(false); cin.tie(NULL);
     int n, q; cin >> n >> q;
-    for (int j = 1; j <= n; ++j) cin >> sparseTable[0][j];
+    for (int j = 1; j <= n; ++j) cin >> succ[0][j];
     for (int i = 1; i < 32; ++i)
         for (int j = 1; j <= n; ++j)
-            sparseTable[i][j] = sparseTable[i-1][sparseTable[i-1][j]];
+            succ[i][j] = succ[i-1][succ[i-1][j]];
+ 
+    while (q--)
+    {
+        int x, k; cin >> x >> k;
+        int i = 0;
+        while (k)
+        {
+            if (k&1) x = succ[i][x];
+            k >>= 1;
+            ++i;
+        }
+        cout << x << '\n';
+    }
+    return 0;
+}
+
+// Find kth parent of a node in tree: https://cses.fi/problemset/task/1687
+const int MAXN = 2*1e5 + 5;
+vec<2, int> par(32, MAXN);
+signed main()
+{
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n, q; cin >> n >> q;
+    par[0][1] = 0;
+    for (int j = 2; j <= n; ++j) cin >> par[0][j];
+    for (int i = 1; i < 32; ++i)
+        for (int j = 1; j <= n; ++j)
+            par[i][j] = par[i-1][par[i-1][j]];
 
     while (q--)
     {
         int x, k; cin >> x >> k;
-        vec<1, int> repre;
-        int cur = 1;
+        int i = 0;
         while (k)
         {
-            if (k&1) repre.push_back(cur);
-            k >>= 1; cur <<= 1;
+            if (k&1) x = par[i][x];
+            k >>= 1;
+            ++i;
         }
-        reverse(all(repre));
-        int res = x;
-        for (auto &v : repre)
-            res = sparseTable[log2(v)][res];
-        cout << res << '\n';
+        if (x == 0) x = -1;
+        cout << x << '\n';
     }
     return 0;
 }
@@ -2346,21 +2721,19 @@ Above logic in successor paths can be applied here
 ![](.gitbook/assets/image%20%2888%29.png)
 
 ```cpp
-const int N = 2*1e5;
-int n;
-vector<int> adj[N], toLeaf(N), maxLength(N);
-int DFS(int u = 0, int par = -1, int depth = 0)
+int ans = 0;
+int dfs(int u = 1, int par = -1)
 {
-    int mxDepth = 0, secondMxDepth = 0;
-    for (auto &v : adj[u])
+    int dep1 = 0, dep2 = 0;
+    for (const int v : adj[u])
     {
         if (v == par) continue;
-        int cur = DFS(v, u, depth+1);
-        if (cur > mxDepth) secondMxDepth = mxDepth, mxDepth = cur;
-        else if (cur > secondMxDepth) secondMxDepth = cur;
+        int curDep = dfs(v, u);
+        if (curDep > dep1) dep2 = dep1, dep1 = curDep;
+        else if (curDep > dep2) dep2 = curDep;
     }
-    maxLength[u] = mxDepth + secondMxDepth + 1;
-    return toLeaf[u] = mxDepth+1;
+    ans = max(ans, dep1+dep2);
+    return dep1+1;
 }
 ```
 
@@ -2399,39 +2772,75 @@ vector<int> findDiameter(pii &pointA, pii &pointB)
 ![Here we are finding length \(edges\), we can generally find nodes and subtract it by 1](.gitbook/assets/image%20%2894%29.png)
 
 ```cpp
-const int MAXN = 1e5;
 int n;
-vector<int> adj[MAXN+1];
-int source[MAXN+1], dist[MAXN+1], secondMaxDist[MAXN+1];
-int DFS(int u = 0, int par = -1)
+vector<vector<int>> adj;
+vector<int> dist;
+void dfs(int u, int par = -1)
 {
-    int mx = 0, pt = -1, secondMx = 0;
-    for (auto &v : adj[u])
+    for (const int v : adj[u])
     {
         if (v == par) continue;
-        int cur DFS(v, u);
-        if (cur > mx) mx = cur, pt = v;
-        else if (cur > secondMx) secondMx = cur;
+        dist[v] = dist[u]+1;
+        dfs(v, u);
     }
-    source[u] = pt, dist[u] = mx+1, secondMaxDist[u] = secondMx+1;
-    return mx+1;
 }
-int DFS2(int u = 0, int par = -1)
+vector<int> allLongestPath()
 {
-    if (par != -1)
-    {
-        dist[u] = max(dist[u], (source[par] == u) ? secondMaxDist[par]+1 : dist[par]+1);
-        if (dist[u] == dist[par]+1 || dist[u] == secondMaxDist[par]+1) source[u] = par;
-    }
-    for (auto &v : adj[u])
-    {
-        if (v == par) continue;
-        DFS2(v, u);
-    }
+    vector<int> res(n+1, 0);
+    dfs(1);
+
+    int optimal = 0;
+    for (int i = 1; i <= n; ++i)
+        if (dist[i] > dist[optimal]) optimal = i;
+    fill(dist.begin(), dist.end(), 0);
+    dfs(optimal);
+    for (int i = 1; i <= n; ++i) res[i] = dist[i];
+
+    for (int i = 1; i <= n; ++i)
+        if (dist[i] > dist[optimal]) optimal = i;
+    fill(dist.begin(), dist.end(), 0);
+    dfs(optimal);
+    for (int i = 1; i <= n; ++i) res[i] = max(res[i], dist[i]);
+
+    return res;
 }
 ```
 
 ### Re-rooting technique
+
+[https://cses.fi/problemset/task/1133](https://cses.fi/problemset/task/1133)
+For each node in tree find sum of distance to all other nodes
+```c++
+int n;
+vector<vector<int>> adj;
+vector<int> sz;
+void dfs(vector<int> &res, int u = 1, int par = -1, int dis = 0)
+{
+    sz[u] = 1, res[1] += dis;
+    for (const int v : adj[u])
+    {
+        if (v == par) continue;
+        dfs(res, v, u, dis+1);
+        sz[u] += sz[v];
+    }
+}
+void dfs2(vector<int> &res, int u = 1, int par = -1)
+{
+    for (const int v : adj[u])
+    {
+        if (v == par) continue;
+        res[v] = res[u] + (n - sz[v]) - sz[v];
+        dfs2(res, v, u);
+    }
+}
+vector<int> allPathSumForEveryNode()
+{
+    vector<int> res(n+1, 0);
+    dfs(res);          // fills sz for each node and find res for 1st (root) node
+    dfs2(res);         // finds actual res using re rooting technique
+    return res;
+}
+```
 
 [https://atcoder.jp/contests/abc160/tasks/abc160\_f](https://atcoder.jp/contests/abc160/tasks/abc160_f)
 
@@ -2537,10 +2946,14 @@ Using the DFS traversed array we are performing certain queries
 
 ## Strongly Connectivity
 
+- Brute force is to use Floydd Warshal and check if all pair within component is non INF
+
 ### Kosaraju Algorithm
 
 * Find topological ordering like you do using DFS
-* Apply DFS over graph transpose in topological ordering those will be SCC.
+* Apply DFS over graph transpose in topological ordering those will be SCC (Strongly Connected Component).
+* If we do transpose of a SCC graph it will still remain SCC.
+* https://youtu.be/Rs6DXyWpWrI
 
 ```cpp
 const int MAXN = 1e5;
@@ -2804,32 +3217,37 @@ A De Bruijn sequence on set \['0', '1'\] of length 2 is 01100 because its substr
 
 Every possible string on st of length _n_ appears exactly once as a substring. n = 3 {0, 1} = 0011101000 in O\(K^n\)
 
+* https://leetcode.com/problems/cracking-the-safe/
 ```cpp
-unordered_set<string> done;
-vec<1, int> edges;
-void DFS(string node, string &st)
-{
-    for (int i = 0; i < st.size(); ++i)
+class Solution {
+public:
+    unordered_set<string> done;
+    vector<int> edges;
+    void dfs(string node, const int k)
     {
-        string cur = node+st[i];
-        if (done.find(cur) == done.end())
+        for (int i = 0; i < k; ++i)
         {
-            done.insert(cur);
-            DFS(cur.substr(1), st);
-            edges.push_back(i);
+            string cur = node + (char)('0'+i);
+            if (done.find(cur) == done.end())
+            {
+                done.insert(cur);
+                dfs(cur.substr(1), k);
+                edges.push_back(i);
+            }
         }
     }
-}
-string deBruijn(int n, string st)
-{
-    done.clear(); edges.clear();
-    string startingNode = string (n-1, st[0]);
-    DFS(startingNode, st);
-    string res;
-    for (auto &x : edges) res += st[x];
-    res += startingNode;
-    return res;
-}
+    
+    string crackSafe(int n, int k)  // for n = 3, k = 2 ans is 0011101000
+    {
+        done.clear(); edges.clear();
+        string startingNode = string(n-1, '0');     // 00
+        dfs(startingNode, k);
+        string res;
+        for (auto &x : edges) res += (char)('0' + x);
+        res += startingNode;
+        return res;
+    }
+};
 ```
 
 ### Hamiltonian Path

@@ -61,6 +61,49 @@ Given two strings, write a method to decide if one is a permutation of the other
 - Count item using a hashtable
 ```
 
+### Valid Paranthesis String
+
+Given a string containing only three types of characters: '(', ')' and '*'. * can be replaced by ( or ). Check if string is valid
+
+```c++
+// Recursive solution, easily can be memoized O(N^2)
+bool checkValid(string &s, int cnt = 0, int cur = 0)
+{
+    if (cnt < 0)
+    	return false;
+    if (cur == s.size())
+    	return (cnt == 0);
+
+    if (s[cur] == '(')
+    	return checkValid(s, cnt+1, cur+1);
+    else if (s[cur] == ')')
+    	return checkValid(s, cnt-1, cur+1);
+    else
+    {
+    	return checkValid(s, cnt, cur+1) | checkValid(s, cnt+1, cur+1) |
+    	checkValid(s, cnt-1, cur+1);
+    }
+}
+bool checkValidString(string s)
+{
+    return checkValid(s);
+}
+
+// Greedy solution
+bool checkValidString(string s)
+{
+    int l = 0, r = 0;
+    for (char ch : s)
+    {
+        l += (ch == '(') ? 1 : -1;      // we are putting ) in place of *
+        r += (ch == ')') ? -1 : 1;      // we are putting ( in place of *
+        l = max(l, 0);                  // closing brackets cannot exceed than opening (no < 0 case)
+        if (r < 0) break;               // In case of )
+    }
+    return (l == 0);
+}
+```
+
 ### [Excel Number to Title](https://leetcode.com/problems/excel-sheet-column-title/)
 
 ```cpp
@@ -1255,6 +1298,169 @@ public:
         return res;
     }
 };
+```
+
+### [Find The Celebrity](https://www.lintcode.com/problem/find-the-celebrity/description)
+Goal is to optimize calls to knows function
+```c++
+// N^2 calls
+int findCelebrity(int n)
+{
+    vector<int> inDeg(n), outDeg(n);
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+            if (i != j && knows(i, j)) outDeg[i]++, inDeg[j]++;
+    }
+
+    for (int i = 0; i < n; ++i)
+        if (inDeg[i] == n-1 && outDeg[i] == 0) return i;
+    return -1;
+}
+
+// N Calls
+int findCelebrity(int n)
+{
+    int i = 0, j = n-1;
+    while (i < j)
+    {
+        if (knows(i, j)) i++;
+        else j--;
+    }
+    // Check if i(or j both are same) is actually celebrity or not
+    for (int x = 0; x < n; ++x)
+        if (x != i && (knows(i, x) || !knows(x, i))) return -1;
+    return i;
+}
+```
+
+### [Maximum Sum of Two Non-Overlapping Subarrays](https://leetcode.com/problems/maximum-sum-of-two-non-overlapping-subarrays/)
+```c++
+int maxSumTwoNoOverlap(vector<int>& A, int L, int M)
+{
+    int n = A.size();
+    vector<int> pre(n, 0);
+    pre[0] = A[0];
+    for (int i = 1; i < n; ++i) pre[i] = A[i] + pre[i-1];
+    
+    // calculate prefix sum of all windows of size L and M starting at i
+    vector<int> lPre(n, 0), mPre(n, 0);
+    lPre[0] = pre[L-1], mPre[0] = pre[M-1];
+    for (int i = 1; i < n-L+1; ++i) lPre[i] = pre[i+L-1] - pre[i-1];
+    for (int i = 1; i < n-M+1; ++i) mPre[i] = pre[i+M-1] - pre[i-1];
+
+    int res = INT_MIN;
+    int mPreMax = mPre[0];
+    for (int i = M, j = 0; i < n-L+1; ++i, ++j)     // M_group then L_group, maintain max of left one
+        mPreMax = max(mPreMax, mPre[j]), res = max(res, lPre[i] + mPreMax);
+    int lPreMax = lPre[0];
+    for (int i = L, j = 0; i < n-M+1; ++i, ++j)     // L_group then M_group, maintain max of left one
+        lPreMax = max(lPreMax, lPre[j]), res = max(res, mPre[i] + lPreMax);
+    return res;
+}
+```
+
+### [Split Array into Consecutive Subsequences](https://leetcode.com/problems/split-array-into-consecutive-subsequences/)
+```c++
+bool isPossible(vector<int>& nums)
+{
+    unordered_map<int, int> cnt, end;
+    for (const int x : nums) cnt[x]++;
+    for (const int x : nums)
+    {
+        if (cnt[x] <= 0) continue;
+        if (end[x-1] > 0) cnt[x]--, end[x-1]--, end[x]++;
+        else if (cnt[x+1] > 0 && cnt[x+2] > 0) cnt[x]--, cnt[x+1]--, cnt[x+2]--, end[x+2]++;
+        else return false;
+    }
+    return true;
+}
+```
+
+### [Min Area Rectangle](https://leetcode.com/problems/minimum-area-rectangle/)
+```c++
+int minAreaRect(vector<vector<int>>& points)
+{
+    unordered_map<int, unordered_set<int>> rec;
+    for (const auto x : points)
+        rec[x[0]].insert(x[1]);
+    int res = INT_MAX;
+    for (int i = 0; i < points.size(); ++i)
+    {
+        for (int j = i+1; j < points.size(); ++j)
+        {
+            int x1 = points[i][0], y1 = points[i][1];
+            int x2 = points[j][0], y2 = points[j][1];
+            if (x1 == x2 || y1 == y2) continue;
+            if (rec[x1].find(y2) != rec[x1].end() && rec[x2].find(y1) != rec[x2].end())
+                res = min(res, abs(x1-x2) * abs(y1-y2));
+        }
+    }
+    return res != INT_MAX ? res : 0;
+}
+```
+
+### [Longest Consecutive Sequence](https://leetcode.com/problems/longest-consecutive-sequence/)
+```c++
+// Simple approach is to sort and then a linear scan will do - O(nlogn)
+
+// We can use DSU here like this, complexity will be O(N * α(n)) where α is inverse ackermann function which
+// on avg is O(1) but in worst case O(logn)
+unordered_map<int, int> parent, sz;
+int findSet(int x) { return (x == parent[x]) ? x : parent[x] = findSet(parent[x]); }
+void unionSet(int x, int y)
+{
+    x = findSet(x), y = findSet(y);
+    if (x != y)
+    {
+        if (sz[x] < sz[y]) swap(x, y);
+        parent[y] = x;
+        sz[x] += sz[y];
+    }
+}
+int longestConsecutive(vector<int>& nums)
+{
+    unordered_set<int> st;
+    parent.clear(), sz.clear();
+    for (const int x : nums)
+    {
+        st.insert(x);
+        parent[x] = x;
+        sz[x] = 1;
+    }
+
+    for (const int x : nums)
+    {
+        if (st.find(x-1) != st.end())
+            unionSet(x, x-1);
+    }
+
+    int res = 0;
+    for (const int x : nums) res = max(res, sz[x]);
+    return res;
+}
+
+// O(N) solution, it may look like N^2 but it's actually linear
+// because if condition inside the for loop is called only when x marks the beginning of sequence
+// hence still making the complexity O(N + N) instead of O(N * N)
+int longestConsecutive(vector<int>& nums)
+{
+    set<int> st;
+    for (const int x : nums) st.insert(x);
+
+    int res = 0;
+    for (const int x : st)
+    {
+        if (st.find(x-1) == st.end())
+        {
+            int curNum = x, curLen = 1;
+            while (st.find(curNum+1) != st.end())
+                curNum++, curLen++;
+            res = max(res, curLen);
+        }
+    }
+    return res;
+}
 ```
 
 ### [Rotate Image](https://leetcode.com/problems/rotate-image/)

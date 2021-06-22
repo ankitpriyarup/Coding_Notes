@@ -187,17 +187,16 @@ ListNode* Solution::reverseBetween(ListNode* A, int B, int C)
 Why Floyd cycle detection Works?: [https://www.youtube.com/watch?v=LUm2ABqAs1w&t=1220s](https://www.youtube.com/watch?v=LUm2ABqAs1w&t=1220s)
 
 ```cpp
-int detectloop(Node *head)
+bool hasCycle(ListNode *head)
 {
-    Node *slow = head;
-    Node *fast = head->next;
+    if (!head) return false;
+    ListNode *slow = head, *fast = head->next;
     while (slow && fast && fast->next)
     {
-        slow = slow->next;
-        fast = fast->next->next;
-        if (slow == fast) return 1;
+        slow = slow->next, fast = fast->next->next;
+        if (slow == fast) return true;
     }
-    return 0;
+    return false;
 }
 
 void removeTheLoop(Node *A)
@@ -375,6 +374,40 @@ ListNode* Solution::mergeKLists(vector<ListNode*> &A)
     return head;
 }
 // Conclusion: this one is better but if there are many duplicacy present 1st one is better
+```
+
+### [Insert Into Cyclic Sorted List](https://www.lintcode.com/problem/insert-into-a-cyclic-sorted-list/description)
+```c++
+ListNode * insert(ListNode *head, int x)
+{
+    if (!head)
+    {
+        ListNode *node = new ListNode(x);
+        node->next = node;
+        return node;
+    }
+    
+    ListNode *cur = head, *maxNode = head;
+    bool inserted = false;
+    while(true)
+    {
+        if (cur->next->val < cur->val) maxNode = cur;
+        if (cur->next->val >= x && cur->val <= x)
+        {
+            ListNode *node = new ListNode(x, cur->next);
+            cur->next = node;
+            inserted = true;
+            break;
+        }
+        
+        cur = cur->next;
+        if (cur == head) break;
+    }
+    
+    // Turning point from max to min
+    if (!inserted) maxNode->next = new ListNode(x, maxNode->next);
+    return head;
+}
 ```
 
 ### Sort Linked List

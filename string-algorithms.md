@@ -489,6 +489,173 @@ suffices = \["abaab", "baab", "aab", "ab", "b"\]
 after sorting = \["aab", "ab", "abaab", "b", "baab"\]  
 Therefore suffix array will be = \[2, 3, 0, 4, 1\]
 
+### [Effectively constructing suffix array](https://codeforces.com/edu/course/2/lesson/2)
+![](.gitbook/assets/suffixarray.png)
+- In the final suffix array, instead of storing entire string store index from which till end the suffix corresponds.
+- Append $ at end of each suffix (because it's lexiographically the smallest so it won't change any suffix order) and make all string same len.
+- We can also apply radix sort on above preparation it will be: O(n * (n + 26)) i.e O(n^2)
+- Finally make strings of len 2^k
+- Total time: O(nlog^2n) we can optimize it to nlogn aswell
+![](.gitbook/assets/suffixarray2.png)
+
+```c++
+const int alphabet = 256;
+int strLen;
+vector<int> sortCyclicShifts(string const& s)
+{
+    int n = s.size();
+    vector<int> p(n), c(n), cnt(max(alphabet, n), 0);
+    for (int i = 0; i < n; i++) cnt[s[i]]++;
+    for (int i = 1; i < alphabet; i++) cnt[i] += cnt[i-1];
+    for (int i = 0; i < n; i++) p[--cnt[s[i]]] = i;
+    c[p[0]] = 0;
+    int classes = 1;
+    for (int i = 1; i < n; i++)
+    {
+        if (s[p[i]] != s[p[i-1]]) classes++;
+        c[p[i]] = classes - 1;
+    }
+    vector<int> pn(n), cn(n);
+    for (int h = 0; (1 << h) < n; ++h)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            pn[i] = p[i] - (1 << h);
+            if (pn[i] < 0) pn[i] += n;
+        }
+        fill(cnt.begin(), cnt.begin() + classes, 0);
+        for (int i = 0; i < n; i++) cnt[c[pn[i]]]++;
+        for (int i = 1; i < classes; i++) cnt[i] += cnt[i-1];
+        for (int i = n-1; i >= 0; i--) p[--cnt[c[pn[i]]]] = pn[i];
+        cn[p[0]] = 0; classes = 1;
+        for (int i = 1; i < n; i++)
+        {
+            pii cur = {c[p[i]], c[(p[i] + (1 << h)) % n]};
+            pii prev = {c[p[i-1]], c[(p[i-1] + (1 << h)) % n]};
+            if (cur != prev) ++classes;
+            cn[p[i]] = classes - 1;
+        }
+        c.swap(cn);
+    }
+    return p;
+}
+vector<int> constructSuffixArray(string s)
+{
+    s += "$"; strLen = s.size();
+    vector<int> sorted_shifts = sortCyclicShifts(s);
+    sorted_shifts.erase(sorted_shifts.begin());
+    return sorted_shifts;
+}
+```
+
+### Substring Search
+- Each substring is the prefix of some suffix
+- Since our suffix array is already sorted apply binary search to it and find a suffix whose prefix include k
+- Total time: logN * len(p) along with NlogN building
+```c++
+bool SearchSubstring(vector<int> &suffArr, string &s, string &k)    // s is original string, k is substr to find
+{
+    int l = 0, r = suffArr.size()-1;
+    while (l <= r)
+    {
+        int mid = l + (r-l)/2, f = 0;
+        for (int i = 0; i < k.size(); ++i)
+        {
+            if (s[suffArr[mid] + i] < k[i]) { f = -1; break; }
+            if (s[suffArr[mid] + i] > k[i]) { f = 1; break; }
+        }
+        if (f == 0) return true;
+        if (f < 0) l = mid+1;
+        else r = mid-1;
+    }
+    return false;
+}
+```
+
+### Count substrings
+- Total time: logN * len(p) along with NlogN building
+```c++
+int lowerBoundSearchSubstring(vector<int> &suffArr, string &s, string &k)
+{
+    int l = 0, r = suffArr.size()-1, val = -1;
+    while (l <= r)
+    {
+        int mid = l + (r-l)/2;
+        string nw = s.substr(suffArr[mid], k.size());
+        if (k == nw) val = mid, r = mid-1;
+        else if (k < nw) r = mid-1;
+        else l = mid+1;
+    }
+    return val;
+}
+int upperBoundSearchSubstring(vector<int> &suffArr, string &s, string &k)
+{
+    int l = 0, r = suffArr.size()-1, val = -1;
+    while (l <= r)
+    {
+        int mid = l + (r-l)/2;
+        string nw = s.substr(suffArr[mid], k.size());
+        if (k == nw) val = mid+1, l = mid+1;
+        else if (k < nw) r = mid-1;
+        else l = mid+1;
+    }
+    return val;
+}
+int countSubstring(vector<int> &suffArr, string &s, string &k)
+{
+    return upperBoundSearchSubstring(suffArr, s, k) - lowerBoundSearchSubstring(suffArr, s, k);
+}
+```
+
+### LCP (Longest Common Prefix) of two strings
+![](.gitbook/assets/lcp.png)
+```c++
+vector<int> constructLCP(string const& s, vector<int> const& p)     // string s and it's suffix array p
+{
+    int n = s.size();
+    vector<int> rank(n, 0);
+    for (int i = 0; i < n; i++) rank[p[i]] = i;
+    int k = 0;
+    vector<int> lcp(n-1, 0);
+    for (int i = 0; i < n; i++)
+    {
+        if (rank[i] == n - 1) { k = 0; continue; }
+        int j = p[rank[i] + 1];
+        while (i + k < n && j + k < n && s[i+k] == s[j+k]) k++;
+        lcp[rank[i]] = k;
+        if (k) k--;
+    }
+    return lcp;
+}
+```
+
+### Count number of different substrings
+```c++
+int numberOfDiffSubstrings(vector<int> &lcp, string &s)
+{
+    int n = s.size();
+    return ((n*(n+1))/2 - accumulate(lcp.begin(), lcp.end(), 0LL));
+}
+```
+
+### Longest Common Substring
+```c++
+string s, t; cin >> s >> t;
+string str = s + '#' + t;
+auto sa = constructSuffixArray(str);
+auto lcp = constructLCP(str, sa);
+string res = "";
+for (int i = 0; i < str.size()-1; ++i)
+{
+    if ((sa[i] < s.size()) ^ (sa[i+1] < s.size()))
+    {
+        if (lcp[i] > res.size())
+            res = str.substr(sa[i], lcp[i]);
+    }
+}
+cout << res << '\n';
+```
+
 ## Suffix Tree / Trie
 
 ```cpp
@@ -632,54 +799,47 @@ public:
 
 ```cpp
 // Brute force O(MN)
-class Solution {
-public:
-    int strStr(string haystack, string needle) {
-        for (int i = 0; ; ++i)
-        {
-            for (int j = 0; ; ++j)
-            {
-                if (j == needle.size()) return i;
-                if (i + j == haystack.size()) return -1;
-                if (needle[j] != haystack[i+j]) break;
-            }
-        }
-    }
-};
-
-// KMP
 int strStr(string haystack, string needle)
 {
-    int nSize = needle.size(), hSize = haystack.size();
-    if (nSize == 0) return 0;
-    vector<int> table(nSize);
-    
-    // building table
-    for (int i = 1, j = 0; i < nSize-1;)
+    if (needle.size() == 0) return 0;
+    for (int i = 0, j = 0; i+j < haystack.size(); ++i)
     {
-        if (needle[i] != needle[j])
+        for (j = 0; j < needle.size(); ++j)
         {
-            if (j > 0) j = table[j-1];
-            else ++i;
-        }
-        else table[i] = j+1, ++i, ++j;
-    }
-    
-    // matching
-    for (int i = 0, matchPos = 0; i < hSize;)
-    {
-        if (haystack[i] == needle[matchPos])
-        {
-            if (matchPos == nSize-1) return (i - (nSize - 1));
-            else ++i, ++matchPos;
-        }
-        else
-        {
-            if (matchPos == 0) ++i;
-            else matchPos = table[matchPos - 1];
+            if (needle[j] != haystack[i+j]) break;
+            if (j == needle.size()-1) return i;
         }
     }
-	return -1;
+    return -1;
+}
+
+// KMP Algorithm
+// https://youtu.be/4jY57Ehc14Y
+// lps[i] is length of longest proper prefix of str[0..i] which is also suffix of str[0..i]
+int strStr(string haystack, string needle)
+{
+    if (needle.size() == 0) return 0;
+
+    vector<int> lps(needle.size());
+    lps[0] = 0;
+    for (int i = 1, j = 0; i < needle.size(); )
+    {
+        if (needle[i] == needle[j]) lps[i++] = ++j;
+        else if (j != 0) j = lps[j-1];      // Consider this example aaacaaaa
+        else lps[i++] = 0;
+    }
+
+    for (int i = 0, j = 0; i < haystack.size(); )
+    {
+        if (needle[j] == haystack[i+j]) ++j;
+        if (j == needle.size()) return i;
+        else if (i < haystack.size() && needle[j] != haystack[i+j])
+        {
+            if (j == 0) ++i;
+            else i+=(j-lps[j-1]), j=lps[j-1];
+        }
+    }
+    return -1;
 }
 ```
 
@@ -700,7 +860,7 @@ If we iterate over words and perform pattern matching complexity will be O\(nk +
 
 ```cpp
 // N^2 version
-vector<int> z_func_trivial(string s)
+vector<int> zFuncTrivial(string s)
 {
     int n = s.size();
     vector<int> z(n, 0);
@@ -709,11 +869,11 @@ vector<int> z_func_trivial(string s)
     return z;
 }
 
-vector<int> z_func(string s)
+vector<int> zFunc(string s)
 {
     int n = s.size();
     vector<int> z(n, 0);
-    for (int i = 1, l = 0, r = 0; i < z; ++i)
+    for (int i = 1, l = 0, r = 0; i < n; ++i)
     {
         if (i <= r) z[i] = min(r-i+1, z[i-l]);
         while (i + z[i] < n && s[z[i]] == s[i + z[i]]) ++z[i];
@@ -801,6 +961,73 @@ z   00000300200300
 take the index with z value = pattern size subtract index
 by (pattern size + 1) that's the answer
 O(M + N) Time
+```
+
+### Repeated String Match(https://leetcode.com/problems/repeated-string-match/)
+```c++
+// Naive way - O(a*b) and linear space
+int repeatedStringMatch(string a, string b)
+{
+    for (int i = 0; i < a.size(); ++i)
+    {
+        if (a[i] == b[0])
+        {
+            int cnt = 1, j = 0, startInd = i;
+            while (j < b.size() && a[startInd] == b[j])
+            {
+                ++j, ++startInd;
+                if (startInd >= a.size() && j < b.size()) startInd %= a.size(), cnt++;
+            }
+            if (j == b.size()) return cnt;
+        }
+    }
+    return -1;
+}
+
+// Laughingly this works way faster than above
+int repeatedStringMatch(string a, string b)
+{
+    string tmp = a;
+    int maxCnt = b.size()/a.size() + 2;
+    for (int i = 1; i <= maxCnt; ++i)
+    {
+        if (a.find(b) != string::npos) return i;
+        a += tmp;
+    }
+    return -1;
+}
+
+// KMP linear time
+int repeatedStringMatch(string a, string b)
+{
+    if (b.size() == 0) return 0;
+    
+    vector<int> lps(b.size());
+    lps[0] = 0;
+    for (int i = 1, j = 0; i < b.size(); )
+    {
+        if (b[i] == b[j]) lps[i++] = ++j;
+        else if (j != 0) j = lps[j-1];
+        else lps[i++] = 0;
+    }
+
+    for (int i = 0, j = 0; i < a.size(); )
+    {
+        if (b[j] == a[(i+j)%a.size()]) ++j;
+        if (j == b.size())
+        {
+            if ((i+j)%a.size()) return (i+j)/a.size()+1;
+            return (i+j)/a.size();
+        }
+        else if (i < a.size() && b[j] != a[(i+j)%a.size()])
+        {
+            if (j == 0) ++i;
+            else i+=(j-lps[j-1]), j=lps[j-1];
+        }
+    }
+
+    return -1;
+}
 ```
 
 Other Problems:  

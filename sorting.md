@@ -580,6 +580,30 @@ for (int i = 0; i < A.size(); i++)
 return A.size()+1;
 ```
 
+### [Missing Ranges](https://www.lintcode.com/problem/missing-ranges/description)
+```c++
+vector<string> findMissingRanges(vector<int> &nums, int lower, int upper)
+{
+    vector<string> res;
+    long long l = lower, r = upper;
+    for (const int x : nums)
+    {
+        if (x > l)
+        {
+            if (l == x-1) res.push_back(to_string(l));
+            else res.push_back(to_string(l) + "->" + to_string(x-1));
+        }
+        l = (long long)x + 1;
+    }
+    if (l <= r)
+    {
+        if (l == r) res.push_back(to_string(l));
+        else res.push_back(to_string(l) + "->" + to_string(r));
+    }
+    return res;
+}
+```
+
 ### Maximum Consecutive Gap
 
 ```cpp

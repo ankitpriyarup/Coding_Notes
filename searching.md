@@ -581,13 +581,13 @@ public:
 ```cpp
 /* If we look at middle, either all left side is sorted or right one is.
 We can check that by checking first and last element of the partition */
-bool search(vector<int> &nums, int target)
+int search(vector<int> &nums, int target)
 {
     int l = 0, r = nums.size() - 1;
     while (l <= r)
     {
         int mid = l + (r - l) / 2;
-        if (nums[mid] == target) return true;
+        if (nums[mid] == target) return mid;
         // If there can be duplicates then add this cond.
         // Eg: [3 1 2 3 3 3 3]
         if (nums[l] == nums[mid] && nums[r] == nums[mid]) ++l, --r;
@@ -602,7 +602,87 @@ bool search(vector<int> &nums, int target)
             else r = mid - 1;
         }
     }
-    return false;
+    return -1;
+}
+```
+
+### [Exam Room](https://leetcode.com/problems/exam-room/)
+```c++
+// O(N) seat and O(logN) leave
+int numOfStudents;
+set<int> locations;
+ExamRoom(int N) : numOfStudents(N) { }
+void leave(int p) { locations.erase(p); }
+int seat()
+{
+    int dist = 0, studentToSit = 0;
+    if (!locations.empty())
+    {
+        auto beg = locations.begin();
+        if (*beg != 0) dist = *beg;
+        for (auto it = next(beg); it != locations.end(); ++it)
+        {
+            int curDist = (*it - *beg)/2;
+            if (curDist > dist) dist = curDist, studentToSit = *beg + dist;
+            beg = it;
+        }
+        beg = prev(locations.end());
+        if (numOfStudents - *beg - 1 > dist) studentToSit = numOfStudents-1;
+    }
+    locations.insert(studentToSit);
+    return studentToSit;
+}
+
+// O(logN) seat and O(logN) leave
+int n;
+set<int> cur;                                           // stores point at which student is placed
+set<pair<int, int>, greater<pair<int, int>>> cand;      // stores [min_dist, -point] pair for possible future candidates. Pick one with highest distance and lowest index.
+ExamRoom(int N) : n(N) { }
+void addCandidate(int a, int b)
+{
+    int nextInd = (a + b)/2;
+    if (nextInd != a) cand.emplace(min(abs(b - nextInd), abs(a - nextInd)), -nextInd);
+}
+void deleteCandidate(int a, int b)
+{
+    int nextInd = (a + b)/2;
+    if (nextInd != a) cand.erase({min(abs(b - nextInd), abs(a - nextInd)), -nextInd});
+}
+
+int seat()
+{
+    if (cur.empty()) { cur.insert(0); cand.emplace(n-1, -(n-1)); return 0; }
+    // Place student on highest distance i.e. begin of cand, then placing new means breaking candidate area into two so adding them
+    auto [len, ind] = *cand.begin();
+    ind = -ind;
+    cand.erase(cand.begin());
+    auto nxt = cur.upper_bound(ind);
+    if (nxt != cur.end()) addCandidate(ind, *nxt);
+    auto prev = cur.upper_bound(ind);
+    if (prev != cur.begin()) { prev--; addCandidate(*prev, ind); }
+    cur.insert(ind);
+    return ind;
+}
+void leave(int p)
+{
+    cur.erase(p);
+    if (cur.empty()) { cand.clear(); return; }
+    int nextInd = -1, prevInd = -1;
+    auto nxt = cur.upper_bound(p);
+    if (nxt != cur.end()) { nextInd = *nxt; deleteCandidate(p, *nxt); }
+    auto prev = cur.upper_bound(p);
+    if (prev != cur.begin()) { prev--, prevInd = *prev; deleteCandidate(*prev, p); }
+    if (cur.size() == 1)
+    {
+        cand.clear();
+        int ind = *cur.begin();
+        if (ind != 0) cand.emplace(ind, 0);
+        if (ind != n-1) cand.emplace(n-1-ind, -(n-1));
+        return;
+    }
+    if (p == 0) cand.emplace(*cur.begin(), 0);
+    else if (p == n-1) cand.emplace(n-1-*cur.rbegin(), -(n-1));
+    else if (nextInd >= 0 && prevInd >= 0) addCandidate(prevInd, nextInd);
 }
 ```
 
@@ -767,6 +847,34 @@ int Solution::paint(int A, int B, vector<int> &C)
             l = mid + 1;
     }
     return (l * B) % 10000003;
+}
+```
+
+### [Minimize Max Distance to Gas Station](https://www.lintcode.com/problem/minimize-max-distance-to-gas-station/description)
+```c++
+double minmaxGasDist(vector<int> &stations, int k)
+{
+    const double EPS = 1e-6;
+    auto check = [&](double x)
+    {
+        int cnt = 0;
+        for (int i = 1; i < stations.size(); ++i)
+        {
+            cnt += ceil((double)(stations[i] - stations[i-1]) / x) - 1;
+            if (cnt > k) return false;
+        }
+        return (cnt <= k);
+    };
+    
+    double l = 0, r = EPS;
+    while (!check(r)) r *= 2;
+    while (l + EPS < r)
+    {
+        double mid = (l + r)/2;
+        if (check(mid)) r = mid;
+        else l = mid;
+    }
+    return r;
 }
 ```
 

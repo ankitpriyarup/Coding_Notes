@@ -19,7 +19,7 @@ Note that {1, 2} and {2, 1} are considered same.
 Answer:
 dp[i] = dp[i-1] + (n-1) * dp[n-2]
 nth person can remain single so dp[n-1] + he can be coupled with other (n-1)
-person making dp[n-2] * (n-2)
+person making dp[n-2] * (n-1)
 ```
 
 ### Jump Game
@@ -183,6 +183,29 @@ ll nthUglyNumber(ll n, ll a, ll b, ll c)
 * [https://leetcode.com/problems/decode-ways-ii/](https://leetcode.com/problems/decode-ways-ii/)
 
 ```cpp
+// Top Down
+vector<int> dp;
+int solve(string &str, int cur = 0)
+{
+    if (cur == str.size()) return 1;
+    if (dp[cur] != -1) return dp[cur];
+    
+    int res = 0;
+    if (str[cur] > '0' && str[cur] <= '9')
+    {
+        res += solve(str, cur+1);
+        if (cur+1 < str.size() && (str[cur] < '2' || (str[cur] == '2' && str[cur+1] <= '6')))
+            res += solve(str, cur+2);
+    }
+    return dp[cur] = res;
+}
+int numDecodings(string s)
+{
+    dp = vector<int>(s.size(), -1);
+    return solve(s);
+}
+
+// Bottom Up
 int numDecodings(string s)
 {
     int n = s.size();
@@ -197,6 +220,8 @@ int numDecodings(string s)
     return dp[n];
 }
 
+// Variant - II
+// Bottom up
 const int M = 1e9 + 7;
 int numDecodings(string s)
 {
@@ -634,39 +659,23 @@ cout << st.size() << '\n';
 /* Follow up question do we have to take care of orientation? In that case
 rotate envelopes initially such first w is small h is large always. */
 
-/* Idea is to apply LIS on one of two i.e. fix the other. So sorting it and
-applying same LIS Binary search logic. */
-int binarySearch(vector<int>& dp, int target)
-{
-    if (dp.size() == 0) return 0;
-    int l = 0, r = dp.size()-1;
-    while (l < r)
-    {
-        int mid = l + (r-l)/2;
-        if (dp[mid] < target) l = mid+1;
-        else r = mid;
-    }
-    if (dp[l] >= target) return l;
-    return dp.size();
-}
-/* Why sort second val in desc order? Consider the case
-[1,1] [4,5] [4,6]
-Sorting second in asc order will give: 1 5 6
-While in desc order it gives: 1 5 which is correct since we can't take 2 values
-in LIS having same first value. */
+/* N^2 LIS is easy to impliment, To do it in NlogN we require same LIS logic as before */
 int maxEnvelopes(vector<vector<int>>& envelopes)
 {
-    sort(envelopes.begin(), envelopes.end(), [](auto a, auto b) {
-        return (a[0] == b[0]) ? (a[1] > b[1]) : (a[0] < b[0]);
-    });
-    vector<int> dp;
-    for (auto e:envelopes)
+    sort(envelopes.begin(), envelopes.end(), [](auto x, auto y)
     {
-        int idx = binarySearch(dp, e[1]);
-        if (idx == dp.size()) dp.push_back(e[1]);
-        else dp[idx] = e[1];
+        return (x[0] == y[0]) ? (x[1] > y[1]) : (x[0] < y[0]);
+    });
+
+    vector<vector<int>> lis;
+    auto comp = [](auto x, auto y) { return (x[1] < y[1]) && (x[0] < y[0]); };
+    for (const auto x : envelopes)
+    {
+        auto lb = lower_bound(lis.begin(), lis.end(), x, comp);
+        if (lb == lis.end()) lis.push_back(x);
+        else *lb = x;
     }
-    return dp.size();
+    return lis.size();
 }
 ```
 
@@ -684,9 +693,9 @@ int candy(vector<int>& ratings)
         changes = false;
         for (int i = 0; i < n; ++i)
         {
-            if (i != n-1 && ratings[i] > ratings[i+1]&& candies[i] <= candies[i+1])
+            if (i != n-1 && ratings[i] > ratings[i+1] && candies[i] <= candies[i+1])
                 candies[i] = candies[i+1]+1, changes = true;
-            if (i > 0 && ratings[i] > ratings[i-1]&& candies[i] <= candies[i-1])
+            if (i > 0 && ratings[i] > ratings[i-1] && candies[i] <= candies[i-1])
                 candies[i] = candies[i-1]+1, changes = true;
         }
     }
@@ -749,7 +758,7 @@ int candy(vector<int>& ratings)
 
 ### [Length of Longest Fibonacci Subsequence](https://leetcode.com/problems/length-of-longest-fibonacci-subsequence/)
 
-Find longest subsequences from given array that follows fibonacci property \(x+y = z\)
+Find longest subsequences from given strictly increasing array that follows fibonacci property \(x+y = z\)
 
 ```cpp
 // Method 1 : N^2 log(MAXN_OF_ARR)
@@ -780,42 +789,36 @@ public:
 };
 
 // DP
-class Solution {
-public:
-    int lenLongestFibSubseq(vector<int>& arr)
+vector<vector<int>> dp;
+int solve(vector<int> &arr, unordered_map<int, int> &rec, int i, int j)
+{
+    if (dp[i][j] != -1) return dp[i][j];
+
+    int res = 0;
+    if (rec.find(arr[i] + arr[j]) != rec.end())
+        res = 1+solve(arr, rec, j, rec[arr[i] + arr[j]]);
+    return dp[i][j] = res;
+}
+int lenLongestFibSubseq(vector<int>& arr)
+{
+    int res = 0;
+    unordered_map<int, int> rec;
+    dp = vector<vector<int>>(arr.size(), vector<int>(arr.size(), -1));
+    for (int i = 0; i < arr.size(); ++i) rec[arr[i]] = i;
+    for (int i = 0; i < arr.size(); ++i)
     {
-        int n = arr.size();
-        unordered_map<int, int> ind;
-        for (int i = 0; i < n; ++i)
-            ind[arr[i]] = i;
-        
-        /* x + y = z i.e. x = z - y (of indices i, j and k respectively)
-        dp[j][k] stores values we can form after picking j and k, why such
-        bizare dp? (considering we +2 for ans) because of overlaping problem
-        1 2 3 5 we mant some dp already overlapping to be able to fresh start
-        aswell and also indulge in some other overlapping */
-        vector<vector<int>> dp(n, vector<int>(n, 0));
-        int ans = 0;
-        for (int k = 0; k < n; ++k)
+        for (int j = i+1; j < arr.size(); ++j)
         {
-            for (int j = 0; j < k; ++j)
-            {
-                int z = arr[k], y = arr[j];
-                int x = z-y;
-                if (x < y && ind.find(x) != ind.end())
-                {
-                    int i = ind[x];
-                    dp[j][k] = dp[i][j]+1;
-                    ans = max(ans, dp[j][k]+2);
-                }
-            }
+            int cur = solve(arr, rec, i, j);
+            if (cur) cur += 2;
+            res = max(res, cur);
         }
-        return ans >= 3 ? ans : 0;
     }
-};
+    return res;
+}
 ```
 
-### Longest Common Subsequence / Substring
+### Longest Common Subsequence (LCS) / Substring
 
 ```cpp
 /* X = nematode    Y = empty
@@ -876,10 +879,6 @@ for (int i = 1; i <= n; ++i)
     ''    a    a    a
     1     2    3    4 */
 ```
-
-Nice variant to this problem:
-
-[https://codingnotes-ap.gitbook.io/mycodingnotes/-M6x0YvWiA9Kptd-4E8g/practice-archives/hackerrank-problems-hard\#paths-to-a-goal-distinctmoves](https://codingnotes-ap.gitbook.io/mycodingnotes/-M6x0YvWiA9Kptd-4E8g/practice-archives/hackerrank-problems-hard#paths-to-a-goal-distinctmoves)
 
 ### Edit Distance
 
@@ -974,7 +973,7 @@ rabbbit
 * Count Different Palindromic Subsequence
 
 ```cpp
-// Longest Palindromic Substring
+// Longest Palindromic Substring O(N^2) and constant space, can be done in O(N) using manacher algorithm
 string longestPalindrome(string s)
 {
     if (s.size() <= 1) return s;
@@ -1069,48 +1068,54 @@ int minCut(string s)
 countPS(str, 0, str.size()-1);
 For "bccb" -> b, c, c, cc, b, bb, bcb, bcb, bccb
 Complexity: O(N^2)*/
-int countPS(string &str, int i, int j)
+vector<vector<int>> dp;
+int solve(string &str, int i, int j)
 {
-    if (i > j) return 0;
-    if (memo[i][j] != -1) return memo[i][j];
-    if (i == j) return memo[i][j] = 1;
-    if (j-i == 1) return memo[i][j] = (str[i] == str[j]) ? 3 : 2;
-    return memo[i][j] = (str[i] == str[j])
-          ? (countPS(str, i+1, j) + countPS(str, i, j-1) + 1)
-          : (countPS(str, i+1, j) + countPS(str, i, j-1) - countPS(str, i+1, j-1));
+    if (i >= j || j < 0) return 0;
+    if (i == j) return 1;
+    if (j-i == 1) return (str[i] == str[j]) ? 3 : 2;
+    if (dp[i][j] != -1) return dp[i][j];
+
+    if (str[i] == str[j])
+        return dp[i][j] = solve(i+1, j) + solve(i, j-1) + 1;
+    else
+        return dp[i][j] = solve(i+1, j) + solve(i, j-1) - solve(i+1, j-1);
+}
+int countPS(string &str)
+{
+    dp = vector<vector<int>>(str.size(), vector<int>(str.size(), -1));
+    return solve(str, 0, str.size()-1);
 }
 
-/* Count Different Palindromic Subsequence, here there could be only 4 chars
-For "bccb" -> b, c, bb, cc, bcb, bccb
-Complexity: O(N^2 * 4)*/
-int memo[1001][1001][4];
+/* Count Different Palindromic Subsequence, */
 const int MOD = 1e9 + 7;
-int solve(string &str, int i, int j, int x)
+vector<vector<int>> dp;
+int solve(string &s, int i, int j)
 {
     if (i > j) return 0;
-    if (i == j) return (str[i] == ('a'+x));
-    if (memo[i][j][x] != -1) return memo[i][j][x];
-    long long res = 0;
-    if (str[i] == str[j] && str[i] == (x+'a'))
+    if (i == j) return 1;
+    if (dp[i][j] != -1) return dp[i][j];
+    
+    int res = 0;
+    if (s[i] == s[j])
     {
-        res = (res + 2) % MOD;
-        for (int ch = 0; ch < 4; ++ch)
-            res = (res + solve(str, i+1, j-1, ch)) % MOD;
+        res = (2*solve(s, i+1, j-1)) % MOD;
+
+        int l = i+1, r = j-1;
+        while (l <= r && s[l] != s[i]) ++l;
+        while (l <= r && s[r] != s[i]) --r;
+
+        if (l < r) res = (res - solve(s, l+1, r-1) + MOD) % MOD;
+        else if (l == r) res = (res + 1) % MOD;
+        else res = (res + 2) % MOD;
     }
-    else
-    {
-        res = (res + solve(str, i+1, j, x)) % MOD;
-        res = (res + solve(str, i, j-1, x)) % MOD;
-        res = (res - solve(str, i+1, j-1, x) + MOD) % MOD;
-    }
-    return memo[i][j][x] = res;
+    else res = ((solve(s, i+1, j) + solve(s, i, j-1)) % MOD - solve(s, i+1, j-1) + MOD) % MOD;
+    return dp[i][j] = res;
 }
-int countPalindromicSubsequences(string str)
+int countPalindromicSubsequences(string S)
 {
-    memset(memo, -1, sizeof(memo));
-    int ans = 0;
-    for (int i = 0; i < 4; ++i) ans = (ans + solve(str, 0, str.size()-1, i)) % MOD;
-    return ans;
+    dp = vector<vector<int>>(S.size(), vector<int>(S.size(), -1));
+    return solve(S, 0, S.size()-1);
 }
 
 // Longest Palindromic Substring in O(N) using Manacher's Algorithm
@@ -1173,43 +1178,26 @@ Val (Weight)    0   1   2   3   4   5   6   7
 ### [Pizza with 3n Slices](https://leetcode.com/problems/pizza-with-3n-slices/)
 
 ```cpp
-/* This problem can be broken down into selecting n/3 (given n is divisible by 3)
-slices such that they are not adjacent and their sum is maximum possible. Also
-since this is a circular array we can select from 1...n-1 elements then 2...n
-elements that way the circular property won't violate result.
+vector<vector<int>> dp;
+int totalCnt;
+int solve(vector<int> &slices, int cur = 0, int cnt = 0)
+{
+    if (cur >= slices.size() || cnt >= totalCnt) return 0;
+    if (dp[cur][cnt] != -1) return dp[cur][cnt];
 
-Input: slices = [1,2,3,4,5,6]
-Output: 10
-
-Row represent slices, column is array. dp[i][j] is what max val we can get if we
-can have i slices and 1..j elements such that no two chosen slice is adjacent.
-      1      2      3      4      5
-1     1      2      3      4      5
-2     1      2      4      6      8
-
-Simmilarly for other part
-      2      3      4      5      6
-1     2      3      4      5      6
-2     2      3      6      8      10
-
-ans = max(8, 10) */
-
+    int res = max(slices[cur] + solve(slices, cur+2, cnt+1), solve(slices, cur+1, cnt));
+    return dp[cur][cnt] = res;
+}
 int maxSizeSlices(vector<int>& slices)
 {
-    int n = slices.size();
-    int k = n/3;
-    int dp[k+1][n+1];  // 1 based indexing, j shifted twice cause of dp[i-1][j-2]
-    memset(dp, 0, sizeof(dp));
-    
-    for (int j = 2; j <= n; ++j)
-        for (int i = 1; i <= k; ++i)
-            dp[i][j] = max(dp[i][j-1], dp[i-1][j-2] + slices[j-2]);
-    int ans = dp[k][n];
-    for (int j = 2; j <= n; ++j)
-        for (int i = 1; i <= k; ++i)
-            dp[i][j] = max(dp[i][j-1], dp[i-1][j-2] + slices[j-1]);
-    ans = max(ans, dp[k][n]);
-    return ans;            
+    dp = vector<vector<int>>(slices.size(), vector<int>(slices.size()/3, -1));
+    totalCnt = slices.size()/3;
+    vector<int> x = slices, y = slices;
+    x.erase(x.begin()); y.erase(y.end()-1);
+    int res = solve(x);
+    dp = vector<vector<int>>(slices.size(), vector<int>(slices.size()/3, -1));
+    res = max(res, solve(y));
+    return res;
 }
 ```
 
@@ -1278,7 +1266,7 @@ problem to Kaden) Iterate over all possible L, R and then using prefixsm mat
 find a single column mat on which apply kaden to find maximum.
 ```
 
-### Egg Dropping Puzzle
+### [Egg Dropping Puzzle](https://leetcode.com/problems/super-egg-drop/)
 
 There are n floors and k eggs if we drop an egg from a floor and it breaks we cannot reuse it otherwise we can, What is the minimum number of moves required to find at which floor egg breaks.
 
@@ -1294,20 +1282,36 @@ T1: DP[k-1, x-1] is also increasing but T2: DP[k, n-x] is decreasing on x.
 [Refer image]
 T1 < T2 (x is too small)    T1 > T2 (x is too large)
 So apply binary search accordingly. */
-unordered_map<int, int> memo;
-int superEggDrop(int k, int n)
+vector<vector<int>> dp;
+int solve(int k, int n)
 {
     if (n == 0) return 0;
     if (k == 1) return n;
-    if (memo.find(n*1000 + k) != memo.end()) return memo[n*1000 + k];
+    if (dp[k][n] != -1) return dp[k][n];
+
+    // NAIVE WAY TO TRANSITION
+    int res = INT_MAX;
+    for (int i = 1; i <= n; ++i)
+        res = min(res, 1 + max(solve(k-1, i-1), solve(k, n-i)));
+    // NAIVE WAY ENDS
+
+    // BINARY SEARCH OPTIMIZATION IN TRANSITION
     int l = 1, r = n;
     while (l < r)
     {
         int mid = l + (r-l)/2;
-        if (superEggDrop(k-1, mid-1) < superEggDrop(k, n-mid)) l = mid+1;
+        if (solve(k-1, mid-1) < solve(k, n-mid)) l = mid+1;
         else r = mid;
     }
-    return memo[n*1000 + k] = 1 + max(superEggDrop(k-1, l-1), superEggDrop(k, n-l));
+    int res = 1 + max(solve(k-1, l-1), solve(k, n-l));
+    // BINARY SEARCH WAY ENDS HERE
+
+    return dp[k][n] = res;
+}
+int superEggDrop(int k, int n)
+{
+    dp = vector<vector<int>>(k+1, vector<int>(n+1, -1));
+    return solve(k, n);
 }
 ```
 
@@ -1439,7 +1443,7 @@ public:
     }
 };
 ​
-// DP Approach
+// Bottom up DP Approach
 class Solution {
 public:
     bool isInterleave(string s1, string s2, string s3)
@@ -1497,7 +1501,31 @@ int longestValidParentheses(string s)
     }
     return ans;
 }
+```
 
+### [Minimum Swaps To Make Sequences Increasing](https://leetcode.com/problems/minimum-swaps-to-make-sequences-increasing/)
+```c++
+vector<vector<int>> dp;
+int solve(vector<int> &A, vector<int> &B, int cur = 0, bool rev = false)
+{
+    if (cur == A.size()) return 0;
+    if (dp[cur][rev] != -1) return dp[cur][rev];
+    
+    int p1 = (cur == 0) ? INT_MIN : A[cur-1], p2 = A[cur];
+    int q1 = (cur == 0) ? INT_MIN : B[cur-1], q2 = B[cur];
+    if (rev) swap(p1, q1);
+    
+    int res = INT_MAX;
+    if (p1 < p2 && q1 < q2) res = min(res, solve(A, B, cur+1, false));
+    if (p1 < q2 && q1 < p2) res = min(res, 1+solve(A, B, cur+1, true));
+
+    return dp[cur][rev] = res;
+}
+int minSwap(vector<int>& A, vector<int>& B)
+{
+    dp = vector<vector<int>>(A.size(), vector<int>(2, -1));
+    return solve(A, B);
+}
 ```
 
 ### Word Break
@@ -1523,20 +1551,25 @@ bool wordBreak(string s, vector<string>& wordDict)
 }
 /* Above greedy solution won't work for this testcase 
 "aaaaaaa" ["aaaa","aaa"], DP solution is needed */
+vector<int> dp;
+bool solve(string_view &s, unordered_set<string_view> &rec, int cur = 0)
+{
+    if (cur == s.size()) return true;
+    if (dp[cur] != -1) return dp[cur];
+
+    for (int i = cur; i < s.size(); ++i)
+    {
+        if (rec.find(s.substr(cur, i-cur+1)) != rec.end())
+            if (solve(s, rec, i+1)) return dp[cur] = true;
+    }
+    return dp[cur] = false;
+}
 bool wordBreak(string s, vector<string>& wordDict)
 {
-    unordered_set<string> rec;
-    for (string s : wordDict) rec.insert(s);
-    vector<bool> DP(s.size(), false);
-    for (int i = 0; i < s.size(); ++i)        
-    {
-        for (int j = i; j >= 0; --j)
-        {
-            string cur = s.substr(j, i-j+1);
-            if (rec.count(cur) && (j-1 < 0 || DP[j-1])) { DP[i] = true; break; }
-        }
-    }
-    return DP[s.size()-1];
+    unordered_set<string_view> rec(wordDict.begin(), wordDict.end());
+    dp = vector<int>(s.size(), -1);
+    string_view str(s);
+    return solve(str, rec);
 }
 
 // The HARD variation also wants you to show every possible finding
@@ -1593,6 +1626,26 @@ public:
         return ans;
     }
 };
+```
+
+### [Guess Number Higher or Lower II](https://leetcode.com/problems/guess-number-higher-or-lower-ii/)
+```c++
+vector<vector<int>> dp;
+int solve(int l, int r)
+{
+    if (l >= r) return 0;
+    if (dp[l][r] != -1) return dp[l][r];
+
+    int res = INT_MAX;
+    for (int i = l; i <= r; ++i)
+        res = min(res, i+max(solve(l, i-1), solve(i+1, r)));
+    return dp[l][r] = res;
+}
+int getMoneyAmount(int n)
+{
+    dp = vector<vector<int>>(n+1, vector<int>(n+1, -1));
+    return solve(1, n);
+}
 ```
 
 ### Number of Subsequences of form a^i b^j c^k
@@ -1740,6 +1793,73 @@ int maxProfit(vector<int>& prices, int fee)
 }
 ```
 
+### House Robber
+- https://leetcode.com/problems/house-robber/
+- https://leetcode.com/problems/house-robber-ii/
+- https://leetcode.com/problems/house-robber-iii/
+```c++
+// Variant - I (No adjacent house to rob allowed)
+class Solution {
+public:
+    vector<int> dp;
+    int solve(vector<int> &nums, int cur = 0)
+    {
+        if (cur >= nums.size()) return 0;
+        if (dp[cur] != -1) return dp[cur];
+        return dp[cur] = max(solve(nums, cur+1), nums[cur] + solve(nums, cur+2));
+    }
+    int rob(vector<int>& nums)
+    {
+        dp = vector<int> (nums.size(), -1);
+        return solve(nums);
+    }
+};
+
+// Variant - II (Array is cyclic)
+class Solution {
+public:
+    vector<int> dp;
+    int solve(vector<int> &nums, int l, const int r)
+    {
+        if (l >= r) return 0;
+        if (dp[l] != -1) return dp[l];
+        return dp[l] = max(solve(nums, l+1, r), nums[l] + solve(nums, l+2, r));
+    }
+    int rob(vector<int>& nums)
+    {
+        if (nums.size() == 1) return nums[0];
+        if (nums.size() == 2) return max(nums[0], nums[1]);
+        dp = vector<int> (nums.size(), -1);
+        int x = solve(nums, 0, nums.size()-1);
+        dp = vector<int> (nums.size(), -1);
+        int y = solve(nums, 1, nums.size());
+        return max(x, y);
+    }
+};
+
+// Variant - III (Now it's a binary tree)
+class Solution {
+public:
+    unordered_map<TreeNode*, int> dp;
+    int solve(TreeNode* root)
+    {
+        if (!root) return 0;
+        if (dp.find(root) != dp.end()) return dp[root];
+        
+        int res = root->val;
+        if (root->left) res += solve(root->left->left) + solve(root->left->right);
+        if (root->right) res += solve(root->right->left) + solve(root->right->right);
+        
+        res = max(res, solve(root->left) + solve(root->right));
+        return dp[root] = res;
+    }
+    int rob(TreeNode* root)
+    {
+        return solve(root);
+    }
+};
+```
+
 ### Weighted Job Scheduling Problem
 
 Given jobs along with their weights we need to choose such that we get max weight out of it.
@@ -1747,23 +1867,23 @@ Given jobs along with their weights we need to choose such that we get max weigh
 ```cpp
 signed main()
 {
-		ios_base::sync_with_stdio(false); cin.tie(NULL);
-		int n; cin >> n;
-		vec<1, tuple<int, int, int>> arr(n);
-		for (auto &x : arr) { int s, e, w; cin >> s >> e >> w; x = {e, s, w}; }
-		sort(all(arr));
+    ios_base::sync_with_stdio(false); cin.tie(NULL);
+    int n; cin >> n;
+    vec<1, tuple<int, int, int>> arr(n);
+    for (auto &x : arr) { int s, e, w; cin >> s >> e >> w; x = {e, s, w}; }
+    sort(all(arr));
 
-		vec<1, int> dp(n);
-		dp[0] = get<2>(arr[0]);
-		for (int i = 1; i < n; ++i)
-		{
-				int e = get<0>(arr[i]), s = get<1>(arr[i]), w = get<2>(arr[i]);
-				int optimal = lower_bound(all(arr), make_tuple(s, 0, 0)) - arr.begin() - 1;
-				if (optimal >= 0) dp[i] = max({dp[i-1], dp[optimal] + w, w});
-				else dp[i] = max(dp[i-1], w);
-		}
-		cout << dp[n-1] << '\n';
-		return 0;
+    vec<1, int> dp(n);
+    dp[0] = get<2>(arr[0]);
+    for (int i = 1; i < n; ++i)
+    {
+        int e = get<0>(arr[i]), s = get<1>(arr[i]), w = get<2>(arr[i]);
+        int optimal = lower_bound(all(arr), make_tuple(s, 0, 0)) - arr.begin() - 1;
+        if (optimal >= 0) dp[i] = max({dp[i-1], dp[optimal] + w, w});
+        else dp[i] = max(dp[i-1], w);
+    }
+    cout << dp[n-1] << '\n';
+    return 0;
 }
 ```
 
@@ -1778,7 +1898,7 @@ signed main()
 '*' Matches any sequence of characters (including the empty sequence). */
 bool isMatch(string s, string p)
 {
-    bool dp[s.size()+1][p.size()+1] {};
+    vector<vector<bool>> dp(s.size()+1, vector<bool>(p.size()+1, false));
     dp[0][0] = true;
     for (int i = 1; i <= s.size(); ++i) dp[i][0] = false;
     for (int i = 1; i <= p.size(); ++i) dp[0][i] = (p[i-1] == '*') ? dp[0][i-1] : false;
@@ -1824,6 +1944,42 @@ bool isMatch(string s, string p)
     return dp[m][n];
 }
 
+```
+
+### [Different Ways to Add Paranthesis](https://leetcode.com/problems/different-ways-to-add-parentheses/)
+```c++
+unordered_map<string, vector<int>> dp;
+vector<int> solve(string input)
+{
+    if (dp.find(input) != dp.end()) return dp[input];
+
+    vector<int> res;
+    for (int i = 0; i < input.size(); ++i)
+    {
+        char ch = input[i];
+        if (ch == '+' || ch == '-' || ch == '*')
+        {
+            for (const int a : diffWaysToCompute(input.substr(0, i)))
+            {
+                for (const int b : diffWaysToCompute(input.substr(i+1)))
+                {
+                    if (ch == '+') res.push_back(a + b);
+                    else if (ch == '-') res.push_back(a - b);
+                    else if (ch == '*') res.push_back(a * b);
+                }
+            }       
+        }
+    }
+    // if input string contains only number
+    if (res.empty()) res.push_back(stoi(input));
+
+    return dp[input] = res;
+}
+vector<int> diffWaysToCompute(string input)
+{
+    dp.clear();
+    return solve(input);
+}
 ```
 
 ### Travelling Salesman Problem
@@ -2060,6 +2216,8 @@ node sum 32.
  /  \               / \
 6    2             2   4
 
+Merge Binary trees pattern
+
 Greedy approach using priority queue won't work.
 
 This is kinda simillar to a classical DP optimization problem
@@ -2067,16 +2225,17 @@ but not exactly, since we can have any pair combined and not
 just consecutive ones.
 
 We can basically start with root and split optimally */
-#define INF (1<<30)
 vector<vector<int>> dp;
+const int INF = (1<<30);
 int solve(vector<vector<int>> &maxBetween, int l, int r)
 {
     if (l == r) return 0;   // leaf node
     if (dp[l][r] != -1) return dp[l][r];
+
     int res = INF;
     for (int i = l; i < r; ++i)
         res = min(res, solve(maxBetween, l, i) + solve(maxBetween, i+1, r) +
-                maxBetween[l][i]*maxBetween[i+1][r]);
+                    maxBetween[l][i]*maxBetween[i+1][r]);
     return dp[l][r] = res;
 }
 int mctFromLeafValues(vector<int>& arr)
@@ -2088,7 +2247,7 @@ int mctFromLeafValues(vector<int>& arr)
         for (int j = i+1; j < arr.size(); ++j)
             maxBetween[i][j] = max(maxBetween[i][j-1], arr[j]);
     }
-    dp.assign(arr.size(), vector<int>(arr.size(), -1));
+    dp = vector<vector<int>>(arr.size(), vector<int>(arr.size(), -1));
     return solve(maxBetween, 0, arr.size()-1);
 }
 ```
@@ -2358,8 +2517,8 @@ If l = r then it's simply 0
 otherwise we have to merge and let a point x (x is l...r-1) then
 DP[l][r] = min for all x: DP[l][x] + DP[x+1][r] + sum(l...r)
 ```
-
-[https://atcoder.jp/contests/dp/submissions/12226101](https://atcoder.jp/contests/dp/submissions/12226101)
+- Topdown [https://atcoder.jp/contests/dp/submissions/17518465](https://atcoder.jp/contests/dp/submissions/17518465)
+- Bottomup [https://atcoder.jp/contests/dp/submissions/12226101](https://atcoder.jp/contests/dp/submissions/12226101)
 
 * [S - Digit Sum](https://atcoder.jp/contests/dp/tasks/dp_s): Since our K is super large we cannot use it we have to store it in string and iterate over its digit. At a particular point if we cannot choose a digit bigger that the same moment digit of K \(unless we have encountered a smaller already before\). If we create a DP\[sum\]\[smallerAlready\] we can find count of numbers discovered so far \(while iterating digits\). In the end our answer will be at DP\[d\]\[false\] + DP\[d\]\[true\] but this denotes from 0 to K \(since we still iterate dig from 0 to 9 for 1st num\) so we have to add extra -1 in answer. [https://atcoder.jp/contests/dp/submissions/12245183](https://atcoder.jp/contests/dp/submissions/12245183)
 * [O - Matching](https://atcoder.jp/contests/dp/tasks/dp_o): N is very low here so we are going to use bitmasking DP here. let's incremently pair every man with a woman and represent already paired woman in bitmask. Initially none are paired so DP\[0\] = 1 then we will find next state basically pair popcount th man and for woman try with all N woman first check if that one is currently single then add prevCount to newMask. [https://atcoder.jp/contests/dp/submissions/12251462](https://atcoder.jp/contests/dp/submissions/12251462)
