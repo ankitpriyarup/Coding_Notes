@@ -2,7 +2,7 @@
 
 ## String Stream
 
-Strings are not mutable. StringStream is mutable.
+> Strings are mutable in C++, but immutable in java. So it is better to use std::string only in c++, while stringstream is better for java
 
 Improves string concatenation, if say there's an empty string and we do str += "a" in a loop till n times. It's time complexity will be O\(N^2\) and not O\(N\) it's because inside the loop every time a new string will be created while copying previous one so it will be O\(1 + 2 + 3 + ... + n\) = O\(n \* \(n + 1\) / 2\)
 
