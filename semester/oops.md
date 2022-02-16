@@ -69,10 +69,10 @@ Basic terms - Objects, Classes, Data Abstractions & Encapsulation, Inheritance, 
 
 #### Dynamic Binding
 
+* Dynamic binding or late binding is the mechanism a computer program waits until runtime to bind the name of a method called to an actual subroutine
 * Binding refers to the linking of a procedure call to the code to be executed in response to the call.
 * Code associated with given procedure call is not known until the time of the call at run-time.
 * Runtime-Polymorphism.
-* Also known as late binding
 
 | Compile Time Polymorphism | Run Time Polymorphism |
 | :--- | :--- |
