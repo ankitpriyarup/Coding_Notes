@@ -26,7 +26,7 @@ for (int i = 0; i < (1<<n); ++i)
     {
         if (x&1) take(pos);
         pos++;
-        x <<= 1;
+        x >>= 1;
     }
     // process permutation
 }
