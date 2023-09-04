@@ -56,6 +56,37 @@ do
 {
     // Process permutation
 } while(next_permutation(permutation.begin(), permutation.end()));
+
+
+// std implementation of next_permutation
+bool nextPermutation(std::string &s, int n)
+{
+    // Find the largest index `i` such that `s[i-1]` is less than `s[i]`
+    int i = n-1;
+    while (s[i-1] >= s[i])
+    {
+        // if `i` is the first index of the string, we are already at the last
+        // possible permutation (string is sorted in reverse order)
+        if (--i == 0) {
+            return false;
+        }
+    }
+ 
+    // If we reach here, substring `s[i…n-1]` is sorted in reverse order.
+    // Find the highest index `j` to the right of index `i` such that `s[j] > s[i-1]`.
+    int j = n-1;
+    while (j > i && s[j] <= s[i-1]) {
+        j--;
+    }
+ 
+    // swap character at index `i-1` with index `j`
+    std::swap(s[i-1], s[j]);
+ 
+    // Reverse substring `s[i…n-1]`and return true
+    std::reverse (s.begin() + i, s.end());
+ 
+    return true;
+}
 ```
 
 ## Backtracking
