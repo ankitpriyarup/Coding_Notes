@@ -427,38 +427,34 @@ public:
 
 ### [Insert Interval In a Sorted List](https://leetcode.com/problems/insert-interval/)
 
-In 2 pass found start and end bound. Start is max index with intervals\[start\]\[1\] &lt;= newInterval\[0\] and end is min index with intervals\[end\]\[0\] &lt;= newInterval\[1\]
+Insert the new interval in the intervals array at correct position, shifting all the older items. Then perform approach from Merge Intervals problem
 
 ```cpp
 class Solution {
 public:
     vector<vector<int>> insert(vector<vector<int>>& intervals, vector<int>& newInterval)
     {
-        if (intervals.empty()) return {newInterval};
-        int l = 0, r = intervals.size()-1;
-        while (l <= r)
-        {
-            int mid = (l+r)/2;
-            if (intervals[mid][1] == newInterval[0]) { l = mid; break; }
-            if (intervals[mid][1] < newInterval[0]) l = mid+1;
-            else r = mid-1;
+        vector<vector<int>> res;
+        int start = 0;
+        for (int i = intervals.size()-1; i >= 0; --i) {
+            if (newInterval[0] > intervals[i][0]) {
+                start = i+1;
+                break;
+            }
         }
-        int start = l; r = intervals.size()-1;
-        while (l <= r)
-        {
-            int mid = (l+r)/2;
-            if (intervals[mid][0] == newInterval[1]) { r = mid; break; }
-            if (intervals[mid][0] < newInterval[1]) l = mid+1;
-            else r = mid-1;
+
+        intervals.push_back(newInterval);
+        for (int i = intervals.size()-1; i > start; --i) {
+            swap(intervals[i], intervals[i-1]);
         }
-        int end = r;
-        if (start < intervals.size())
-            newInterval[0] = min(newInterval[0], intervals[start][0]);
-        if (end >= 0)
-            newInterval[1] = max(newInterval[1], intervals[end][1]);
-        intervals.erase(intervals.begin()+start, intervals.begin()+end+1);
-        intervals.insert(intervals.begin()+start, newInterval);
-        return intervals;
+        res.push_back(intervals[0]);
+        for (int i = 1; i < intervals.size(); ++i) {
+            if (intervals[i][0] <= res.back()[1])
+                res[res.size()-1][1] = max(res[res.size()-1][1], intervals[i][1]);
+            else
+                res.push_back(intervals[i]);
+        }
+        return res;
     }
 };
 ```
