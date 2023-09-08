@@ -1111,30 +1111,32 @@ int numSubarrayProductLessThanK(vector<int>& nums, int k)
 
 ### [Largest Area in Histogram](https://leetcode.com/problems/largest-rectangle-in-histogram/)
 
-Brute force is to pick two points, find minimum from i to j area within that bound will be min \* \(j-i+1\) just find maximum over all N square i j pairs. Complexity will be N^3 we can optimize it easily to get N^2.
-
-[https://youtu.be/MhQPpAoZbMc](https://youtu.be/MhQPpAoZbMc)
+At a node i, we can brute force to find in left what is nearest smaller and in right what is nearest smaller. This can be further optimized through monotic stack.
 
 ```cpp
-int largestRectangleArea(vector<int>& heights)
-{
+int largestRectangleArea(vector<int>& heights) {
+    int n = heights.size();
+    vector<int> previousSmallest(n);
+    vector<int> nextSmallest(n);
     stack<int> st;
-    int ans = 0;
-    heights.push_back(-1);
-    for (int i = 0; i < heights.size(); ++i)
-    {
-        while (!st.empty() && heights[i] <= heights[st.top()])
-        {
-            int height = heights[st.top()];
-            st.pop();
-            // i is rightmost smaller element, st.top() is
-            // prev top leftmost
-            int width = i - (st.empty() ? -1 : st.top()) - 1;
-            ans = max(ans, height * width);
-        }
+    for (int i = 0; i < n; ++i) {
+        while (!st.empty() && heights[st.top()] >= heights[i]) st.pop();
+        previousSmallest[i] = st.empty() ? -1 : st.top();
         st.push(i);
     }
-    return ans;
+    st = stack<int>();
+    for (int i = n-1; i >= 0; --i) {
+        while (!st.empty() && heights[st.top()] >= heights[i]) st.pop();
+        nextSmallest[i] = st.empty() ? n : st.top();
+        st.push(i);
+    }
+    
+    int res = 0;
+    for (int i = 0; i < n; ++i) {
+        int area = (nextSmallest[i] - previousSmallest[i] - 1) * heights[i];
+        res = max(area, res);
+    }
+    return res;
 }
 ```
 
