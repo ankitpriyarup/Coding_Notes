@@ -1241,9 +1241,79 @@ string removeKdigits(string num, int k)
 }
 ```
 
-TODO:
-
 * **LC739. Daily Temperatures**
-* **LC901. Online Stock Span**
-* **LC907. Sum of Subarray Minimums**
 
+```c++
+vector<int> dailyTemperatures(vector<int>& temperatures) {
+    stack<int> st;
+    vector<int> res(temperatures.size());
+    for (int i = temperatures.size()-1; i >= 0; --i) {
+        while (!st.empty() && temperatures[i] >= temperatures[st.top()]) st.pop();
+        res[i] = st.empty() ? 0 : (st.top() - i);
+        st.push(i);
+    }
+    return res;
+}
+```
+
+* **LC901. Online Stock Span**
+
+```c++
+/**
+find index of first number strictly greater than current
+100    80  60  70  60  75  85
+1      1   1   2   1   4   6
+*/
+stack<pair<int, int>> st;
+int sz;
+StockSpanner() {
+    st = stack<pair<int, int>>();
+    sz = 0;
+}
+
+int next(int price) {
+    while (!st.empty() && st.top().second <= price) st.pop();
+    int pt = st.empty() ? -1 : st.top().first;
+    int res = sz - pt;
+    st.push({sz++, price});
+    return res;
+}
+```
+
+* **LC907. Sum of Subarray Minimums**
+```c++
+int sumSubarrayMins(vector<int>& arr) {
+    /*
+    3   -   [3]
+    1   -   [1], [1, 2], [1, 2, 4], [3, 1, 2], [3, 1], [3, 1, 2, 4] -> {0, 4}
+    2   -   [2], [2, 4]
+    4   -   [4]
+    */
+    int n = arr.size();
+    vector<int> leftSmallest(n);
+    vector<int> rightSmallest(n);
+    stack<int> st;
+    for (int i = 0; i < n; ++i) {
+        while (!st.empty() && arr[i] < arr[st.top()]) st.pop();
+        leftSmallest[i] = st.empty() ? -1 : st.top();
+        st.push(i);
+    }
+    st = stack<int>();
+    for (int i = n-1; i >= 0; --i) {
+        // <= is required here for this case [71,55,82,55] otherwise it gives 483 whereas expected is 593
+        while (!st.empty() && arr[i] <= arr[st.top()]) st.pop();
+        rightSmallest[i] = st.empty() ? n : st.top();
+        st.push(i);
+    }
+
+    long long res = 0;
+    const int MOD = 1e9 + 7;
+    for (int i = 0; i < n; ++i) {
+        int l = leftSmallest[i];
+        int r = rightSmallest[i];
+        cout << l << " " << r << "\n";
+        res = (res + (((long long)arr[i] * (i-l) * (r-i)) % MOD)) % MOD;
+    }
+    return res;
+}
+```
