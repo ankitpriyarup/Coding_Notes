@@ -612,11 +612,20 @@ We have rod of length 5 with pieces value: 2, 5, 7, 8 for
 /* [3, 10, 2, 1, 20] = [3, 10, 20] = 3
 [3, 2] = [3] or [2] = 1
 [50, 3, 10, 7, 40, 50] = [3, 7, 40, 50] or [3, 10, 40, 50] = 4 */
-// N squared solution is very easy to have
+// N squared solution is very easy to have using dp, dp[i] = min of dp[j]+1 where j < i and arr[j] < arr[i]
 
-/* NlogN approach: Length of st denotes LIS formed by including
-currently encountered element and maintaining an analogous LIS
-behavior. */
+/* Greedy approach:
+[3, 10, 2, 1, 20]
+itterate and form increasing lists at the end of itteration we will have
+list1: [3, 10, 20] list2: [2, 20] list3: [1, 20] so list1 is the answer.
+
+directly implementing above logic can be costly, there's an observation in it.
+- We only care about the size of list not the actual list.
+- To keep maintaining the list we need to just maintain relative order
+so can we maintain all the lists in one list (denoted using set) ? length of list is the answer
+
+final algo: itterate, if set contain element atleast that then remove it and add the element.
+ */
 int lengthOfLIS(vector<int>& nums)
 {
     set<int> st;
