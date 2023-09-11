@@ -2098,28 +2098,29 @@ classical one path problem stores states like: dp[r][c] is
 maximum cherries that can be picked at r row and c cloumn.
 Now we have r1, c1, r2, c2. At any point of traversal
 r1 + c1 = r2 + c2 using this we can avoid one term
-so, r2 = r1 + c1 - c2
-now we can form simmilar dp[r1][c1][c2] */
-int n, dp[55][55][55];
-int compute(vector<vector<int>> &grid, int r1, int c1, int c2)
-{
-    int r2 = r1+c1-c2;
-    if (r1 == n || r2 == n || c1 == n || c2 == n || grid[r1][c1] == -1 || grid[r2][c2] == -1) return INT_MIN;
-    if (r1 == n-1 && c1 == n-1) return grid[r1][c1];
-    if (dp[r1][c1][c2] != INT_MIN) return dp[r1][c1][c2];
-    
-    int ans = grid[r1][c1];
-    if (c1 != c2) ans += grid[r2][c2];
-    ans += max({compute(grid, r1, c1+1, c2+1), compute(grid, r1+1, c1, c2+1),
-        compute(grid, r1, c1+1, c2), compute(grid, r1+1, c1, c2)});
-    dp[r1][c1][c2] = ans;
-    return ans;
+so, c2 = r1 + c1 - r2
+now we can form simmilar dp[r1][c1][r2] */
+
+vector<vector<vector<int>>> dp;
+int solve(vector<vector<int>>& grid, int r1 = 0, int c1 = 0, int r2 = 0) {
+	int c2 = r1 + c1 - r2;
+	int n = grid.size();
+	if (r1 == n || r2 == n || c1 == n || c2 == n || grid[r1][c1] == -1 || grid[r2][c2] == -1) return INT_MIN;
+	if (r1 == n-1 && c1 == n-1 && r2 == n-1 && c2 == n-1) return grid[n-1][n-1];
+	if (dp[r1][c1][r2] != -1) return dp[r1][c1][r2];
+	
+	int res = grid[r1][c1];
+	
+	if (r1 != r2 || c1 != c2) res += grid[r2][c2];
+	// DD DR RD RR
+	int incr = max({solve(grid, r1+1, c1, r2+1), solve(grid, r1+1, c1, r2),
+			solve(grid, r1, c1+1, r2+1), solve(grid, r1, c1+1, r2)});
+	return dp[r1][c1][r2] = res + incr;
 }
-int cherryPickup(vector<vector<int>>& grid)
-{
-    n = grid.size();
-    for (int i = 0; i < 55; ++i) for (int j = 0; j < 55; ++j) for (int k = 0; k < 55; ++k) dp[i][j][k] = INT_MIN;
-    return max(0, compute(grid, 0, 0, 0));
+int cherryPickup(vector<vector<int>>& grid) {
+	int n = grid.size();
+	dp.assign(n+1, vector<vector<int>>(n+1, vector<int>(n+1, -1)));
+	return max(0, solve(grid));
 }
 ```
 
