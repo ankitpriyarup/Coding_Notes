@@ -2446,6 +2446,61 @@ int checkRecord(int n)
 }
 ```
 
+### Optimal Account Balancing (Leetcode)
+Implement splitwise simplify debts
+
+```cpp
+/*
+Idea is to first create a list of how much a person is owed and how much they owe.
+Its a 1D list where + means ith person will get that amount and - means ith person will give that amount.
+This array can be computed by essentially itterating through all the virtual transaction edges.
+
+Now the problem is basically optimally matching lenders with recievers. Folks with zero net can be removed from transaction
+It can be solved through DP, maintain a bitwise state where ith bit set means transaction is pending there. Base case is 0
+which means no pending transaction.
+*/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	int n; cin >> n;
+	vector<vector<int>> arr(n, vector<int>(3));
+	for (auto &x : arr)
+		cin >> x[0] >> x[1] >> x[2];
+	
+	vector<int> debts(50, 0);
+	for (auto &x: arr) {
+		debts[x[0]] -= x[2];
+		debts[x[1]] += x[2];
+	}
+	
+	vector<int> unresolvedDebts;
+	for (int x: debts) {
+		if (x != 0)
+			unresolvedDebts.push_back(x);
+	}
+
+	int total = unresolvedDebts.size();
+	function<int(int)> solve = [&](int state) -> int {
+		if (state == 0) return 0;
+
+		int total = 0;
+		for (int i = 0; i < total; ++i)
+			total += (1<<i)&state ? unresolvedDebts[i] : 0;
+		if (total != 0) return INT_MAX;
+		int res = __builtin_popcount(state);
+		for (int nextState = state&(state-1); nextState; nextState = state&(nextState-1)) {
+			res = min(res, solve(nextState) + solve(state ^ nextState));
+		}
+		return res;
+	};
+	cout << solve((1 << total) - 1) << '\n';
+
+	return 0;
+}
+```
+
 ## AtCoder DP Contest
 
 * [A - Frog 1](https://atcoder.jp/contests/dp/tasks/dp_a): O\(1\) Space solution - [https://atcoder.jp/contests/dp/submissions/12201992](https://atcoder.jp/contests/dp/submissions/12201992)
