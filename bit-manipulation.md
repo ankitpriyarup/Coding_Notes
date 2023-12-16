@@ -666,6 +666,26 @@ here is A is hexadecimal 1010 where 1 is present at every even position
 where as in power of 4 , there should be only one set bit that too in the odd position
 ```
 
+## Trick
+
+```
+Sometimes there's a number used as bit map representing state. Let's say 26 (11010)
+now we want different combinations of set bit with this.
+
+26    11010
+24    11000
+18    10010
+16    10000
+10    01010
+8     01000
+2     00010
+
+for (int i = x; i; i = x&(i-1)) {
+    cout << i << " ";
+    // 26 24 18 16 10 8 2 
+}
+```
+
 ## Conversion
 
 Write a function to determine the number of bits you would need to flip to convert A to integer B
