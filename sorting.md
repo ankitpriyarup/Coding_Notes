@@ -199,25 +199,26 @@ sort is better */
 ### Kth Smallest/Largest Number
 
 ```cpp
-// Quick Sort extension
-using namespace std;
-int partition(int arr[], int l, int r)
-{
-    int pivot = arr[r];
-    int j = l - 1;
-    for (int i = l; i <= r - 1; ++i)
-        if (arr[i] <= pivot) swap(arr[++j], arr[i]);
-    swap(arr[++j], arr[r]);
-    return j;
-}
-int k_th_smallest(int arr[], int l, int r, int k)
-{
-    if (k > 0 && k <= r - l + 1)
-    {
-        int pos = partition(arr, l, r);
-        if (pos - l == k - 1) return arr[pos];
-        if (pos - l > k - 1) return k_th_smallest(arr, l, pos - 1, k);
-        return k_th_smallest(arr, pos + 1, r, k - pos + l - 1);
+int findKthLargest(vector<int>& nums, int k) {
+    srand((unsigned int)time(NULL));
+    function<int(int, int)> partition = [&](int l, int r) -> int {
+        int partitionIndex = (rand() % (r - l + 1)) + l;
+        int pivot = nums[partitionIndex];
+        swap(nums[partitionIndex], nums[r]);
+        int j = l;
+        for (int i = l; i < r; ++i) {
+            if (nums[i] < pivot) swap(nums[j++], nums[i]);
+        }
+        swap(nums[j], nums[r]);
+        return j;
+    };
+
+    int l = 0, r = nums.size() - 1;
+    while (l <= r) {
+        int partitionIndex = partition(l, r);
+        if (partitionIndex == nums.size() - k) return nums[partitionIndex];
+        else if (partitionIndex > nums.size() - k) r = partitionIndex - 1;
+        else l = partitionIndex + 1;
     }
     return INT_MAX;
 }
