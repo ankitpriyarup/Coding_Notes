@@ -663,51 +663,46 @@ Can be solved using trie along with Max XOR Pair problem
 ```cpp
 /* No need to check for isTerminal since we have same length
 (i.e. 32) for all */
-vector<vector<int>> trieArr;
-int nxt;
-void insert(int num)
-{
-    int pos = 0;
-    for (int i = 31; i >= 0; --i)
-    {
-        bool cur = !!(num & (1<<i));
-        if (trieArr[pos][cur] == 0)
-        {
-            trieArr[pos][cur] = nxt;
-            pos = nxt++;
-        }
-        else pos = trieArr[pos][cur];
+class Solution {
+public:
+    // Here had to declare global varaible otherwise TLE was happening at larger tests.
+    int trieArray[10000000][2];
+    int findMaximumXOR(vector<int>& nums) {
+        if (nums.size() <= 1) return 0;
+
+        int nxt = 1;
+        function<void(int)> insert = [&](int toInsert) {
+            int node = 0;
+            for (int i = 31; i >= 0; --i) {
+                bool isIthBitSet = toInsert&(1<<i);
+                if (trieArray[node][isIthBitSet]) node = trieArray[node][isIthBitSet];
+                else {
+                    trieArray[node][isIthBitSet] = nxt;
+                    node = nxt;
+                    nxt++;
+                }
+            }
+        };
+
+        function<int(int)> findOptimal = [&](int source) -> int {
+            int res = 0;
+            int node = 0;
+            for (int i = 31; i >= 0; --i) {
+                bool isIthBitSet = source&(1<<i);
+                bool found = trieArray[node][!isIthBitSet];
+                bool bitToLook = found ? !isIthBitSet : isIthBitSet;
+                node = trieArray[node][bitToLook];
+                if (found) res |= (1<<i);
+            }
+            return res;
+        };
+
+        for (int x: nums) insert(x);
+        int res = 0;
+        for (int x: nums) res = max(res, findOptimal(x));
+        return res;
     }
-}
-int findOptimal(int num)
-{
-    int pos = 0, res = 0;
-    for (int i = 31; i >= 0; --i)
-    {
-        bool cur = !!(num & (1<<i));
-        if (trieArr[pos][!cur] != 0)
-        {
-            pos = trieArr[pos][!cur];
-            if (!cur) res += (1<<i);
-        }
-        else
-        {
-            pos = trieArr[pos][cur];
-            if (cur) res += (1<<i);
-        }
-    }
-    return res;
-}
-int findMaximumXOR(vector<int>& nums)
-{
-    trieArr.assign((nums.size()+1)*32, vector<int>(2, 0));
-    nxt = 1;
-    
-    for (auto &x : nums) insert(x);
-    int res = 0;
-    for (auto &x : nums) res = max(res, x^findOptimal(x));
-    return res;
-}
+};
 ```
 
 ### [The Skyline Problem](https://leetcode.com/problems/the-skyline-problem/)
