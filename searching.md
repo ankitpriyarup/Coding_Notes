@@ -1038,6 +1038,26 @@ double minmaxGasDist(vector<int> &stations, int k)
 }
 ```
 
+### [Minimized Maximum of Products Distributed to Any Store](https://leetcode.com/problems/minimized-maximum-of-products-distributed-to-any-store/description/)
+```cpp
+int minimizedMaximum(int n, vector<int>& quantities) {
+    function<bool(int)> check = [&](int x) -> bool {
+        int cnt = 0;
+        for (int quantity: quantities)
+            cnt += ceil((double)quantity / x);
+        return cnt <= n;
+    };
+
+    int l = 1, r = *max_element(quantities.begin(), quantities.end());
+    while (l < r) {
+        int mid = l + (r-l)/2;
+        if (check(mid)) r = mid;
+        else l = mid + 1;
+    }
+    return l;
+}
+```
+
 ## Codeforces
 
 * [Maximum Median](https://codeforces.com/contest/1201/problem/C): [https://codeforces.com/contest/1201/submission/76923324](https://codeforces.com/contest/1201/submission/76923324)
