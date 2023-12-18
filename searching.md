@@ -727,80 +727,109 @@ int search(vector<int> &nums, int target)
 ### [Exam Room](https://leetcode.com/problems/exam-room/)
 ```c++
 // O(N) seat and O(logN) leave
-int numOfStudents;
+int totalSeats;
 set<int> locations;
-ExamRoom(int N) : numOfStudents(N) { }
+
+ExamRoom(int N): totalSeats(N) { }
 void leave(int p) { locations.erase(p); }
-int seat()
-{
-    int dist = 0, studentToSit = 0;
-    if (!locations.empty())
-    {
-        auto beg = locations.begin();
-        if (*beg != 0) dist = *beg;
-        for (auto it = next(beg); it != locations.end(); ++it)
-        {
-            int curDist = (*it - *beg)/2;
-            if (curDist > dist) dist = curDist, studentToSit = *beg + dist;
-            beg = it;
+int seat() {
+    int posToUse = 0;
+    if (!locations.empty()) {
+        int optimalDistance = *locations.begin();
+        for (auto i = locations.begin(), j = next(locations.begin()); j != locations.end(); ++i, ++j) {
+            int distance = (*j - *i) / 2;
+            if (distance > optimalDistance)
+                optimalDistance = distance, posToUse = *i + distance;
         }
-        beg = prev(locations.end());
-        if (numOfStudents - *beg - 1 > dist) studentToSit = numOfStudents-1;
+        int lastDistance = totalSeats - *prev(locations.end()) - 1;
+        if (lastDistance > optimalDistance)
+            optimalDistance = lastDistance, posToUse = totalSeats - 1;
     }
-    locations.insert(studentToSit);
-    return studentToSit;
+    locations.insert(posToUse);
+    return posToUse;
 }
 
 // O(logN) seat and O(logN) leave
-int n;
-set<int> cur;                                           // stores point at which student is placed
-set<pair<int, int>, greater<pair<int, int>>> cand;      // stores [min_dist, -point] pair for possible future candidates. Pick one with highest distance and lowest index.
-ExamRoom(int N) : n(N) { }
-void addCandidate(int a, int b)
-{
-    int nextInd = (a + b)/2;
-    if (nextInd != a) cand.emplace(min(abs(b - nextInd), abs(a - nextInd)), -nextInd);
-}
-void deleteCandidate(int a, int b)
-{
-    int nextInd = (a + b)/2;
-    if (nextInd != a) cand.erase({min(abs(b - nextInd), abs(a - nextInd)), -nextInd});
+int totalSeats;
+set<int> locations;
+// This set stores the future possibilities, idea is when we place a student there are
+// two new possibilities, left or right that we create. pair stores [min_dist, -point]
+// Pick one with highest distance and lowest index.
+set<pair<int, int>, greater<pair<int, int>>> possibilities;
+
+// Given two locations first & second, add candidate in the middle.
+void addCandidate(int first, int second) {
+    int nextIndex = (first + second) / 2;
+    if (nextIndex != first)
+        possibilities.insert({min(abs(first - nextIndex), abs(second - nextIndex)), -nextIndex});
 }
 
-int seat()
+// Given two locations first & second, add candidate in the middle.
+void deleteCandidate(int first, int second)
 {
-    if (cur.empty()) { cur.insert(0); cand.emplace(n-1, -(n-1)); return 0; }
-    // Place student on highest distance i.e. begin of cand, then placing new means breaking candidate area into two so adding them
-    auto [len, ind] = *cand.begin();
-    ind = -ind;
-    cand.erase(cand.begin());
-    auto nxt = cur.upper_bound(ind);
-    if (nxt != cur.end()) addCandidate(ind, *nxt);
-    auto prev = cur.upper_bound(ind);
-    if (prev != cur.begin()) { prev--; addCandidate(*prev, ind); }
-    cur.insert(ind);
-    return ind;
+    int nextIndex = (first + second) / 2;
+    if (nextIndex != first)
+        possibilities.erase({min(abs(first - nextIndex), abs(second - nextIndex)), -nextIndex});
 }
-void leave(int p)
-{
-    cur.erase(p);
-    if (cur.empty()) { cand.clear(); return; }
-    int nextInd = -1, prevInd = -1;
-    auto nxt = cur.upper_bound(p);
-    if (nxt != cur.end()) { nextInd = *nxt; deleteCandidate(p, *nxt); }
-    auto prev = cur.upper_bound(p);
-    if (prev != cur.begin()) { prev--, prevInd = *prev; deleteCandidate(*prev, p); }
-    if (cur.size() == 1)
-    {
-        cand.clear();
-        int ind = *cur.begin();
-        if (ind != 0) cand.emplace(ind, 0);
-        if (ind != n-1) cand.emplace(n-1-ind, -(n-1));
+
+ExamRoom(int N): totalSeats(N) { }
+int seat() {
+    if (locations.empty()) {
+        locations.insert(0);
+        possibilities.insert({totalSeats-1, -(totalSeats-1)});
+        return 0;
+    }
+
+    // Take the best possibility, and place the student there.
+    // After taking the possbility, it cannot be used in future.
+    auto [minDistance, point] = *possibilities.begin();
+    point *= -1;
+    possibilities.erase(possibilities.begin());
+
+    // Taken choice, divides the vacant seats in two parts add them as possibility.
+    auto upperBoundLocation = locations.upper_bound(point);
+    if (upperBoundLocation != locations.end()) addCandidate(point, *upperBoundLocation);
+    if (upperBoundLocation != locations.begin()) addCandidate(point, *prev(upperBoundLocation));
+
+    locations.insert(point);
+    return point;
+}
+
+void leave(int p) {
+    locations.erase(p);
+    if (locations.empty()) {
+        possibilities.clear();
         return;
     }
-    if (p == 0) cand.emplace(*cur.begin(), 0);
-    else if (p == n-1) cand.emplace(n-1-*cur.rbegin(), -(n-1));
-    else if (nextInd >= 0 && prevInd >= 0) addCandidate(prevInd, nextInd);
+
+    // If a student leaves, it removes old small possibilities that were in left and right side.
+    // Instead a new bigger possibility comes in that place.
+    int nextIndex = -1, prevIndex = -1;
+    auto upperBoundLocation = locations.upper_bound(p);
+    if (upperBoundLocation != locations.end()) {
+        nextIndex = *upperBoundLocation;
+        deleteCandidate(nextIndex, p);
+    }
+    if (upperBoundLocation != locations.begin()) {
+        prevIndex = *prev(upperBoundLocation);
+        deleteCandidate(prevIndex, p);
+    }
+
+    // If initially there were two students one left now new set of possibilities exist at left & right
+    // side of that remaining student.
+    if (locations.size() == 1)
+    {
+        possibilities.clear();
+        int ind = *locations.begin();
+        if (ind != 0) possibilities.insert({ind, 0});
+        if (ind != totalSeats-1) possibilities.insert({totalSeats - 1 - ind, -(totalSeats-1)});
+        return;
+    }
+
+    // Need three cases 1) extreme left, 2) extreme right, and 3) middle.
+    if (p == 0) possibilities.insert({*locations.begin(), 0});
+    else if (p == totalSeats-1) possibilities.insert({totalSeats - 1 - *locations.rbegin(), -(totalSeats-1)});
+    else if (nextIndex >= 0 && prevIndex >= 0) addCandidate(prevIndex, nextIndex);
 }
 ```
 
