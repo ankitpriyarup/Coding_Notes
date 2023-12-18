@@ -172,7 +172,58 @@ Let us consider the problem of calculating the number of paths in an n x n grid 
 
 Meet in the middle is a technique where the search space is divided into two parts of about equal size. A separate search is performed for both of the parts, and finally the results of the searches are combined.
 
-For example, suppose that the list is \[2,4,5,9\] and x = 15. First, we divide the list into A = \[2,4\] and B = \[5,9\]. After this, we create lists SA = \[0,2,4,6\] and SB = \[0,5,9,14\]. \(SA is total subset sum possible in A\) Next we can find original problem solution by using hashmap SA\[i\] + SA\[j\] = targ.
+### [Partition Array Into Two Arrays to Minimize Sum Difference](https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference/description/)
+
+```cpp
+/** Here naive solution was to get all possible subsets through bitmanipulation 2^(2n) for the cases where popcount is n get the sum.
+However total time complexity of 2^2n is 2^30 will give TLE.
+
+Solution use meet in middle approach, divide the array in two part [0, n/2 - 1] [n/2, n-1]
+Now, find all subset which will be 2*2^n i.e. 2^16 which is within limit. Grouping those subsets in terms of how many elements taken.
+Now do a loop on how much to take from left and get its possible sums and do a lower bound on right possibilities.
+
+ */
+class Solution {
+public:
+    int minimumDifference(vector<int>& nums) {
+        int totalSum = accumulate(nums.begin(), nums.end(), 0), n = nums.size();
+
+        function<vector<vector<int>>(int, int)> findAllSubsets = [&](int l, int r) -> vector<vector<int>> {
+            int len = r - l + 1;
+            vector<vector<int>> res(len + 1);
+            for (int i = 0; i < (1 << len); ++i) {
+                int sum = 0;
+                for (int j = 0; j < len; ++j) {
+                    if (i&(1<<j)) sum += nums[l + j];
+                }
+                res[__builtin_popcount(i)].push_back(sum);
+            }
+            return res;
+        };
+
+        auto left = findAllSubsets(0, n/2 - 1);
+        auto right = findAllSubsets(n/2, n - 1);
+
+        int res = INT_MAX;
+        for (int takeLeft = 0; takeLeft <= n/2; ++takeLeft) {
+            int takeRight = n/2 - takeLeft;
+            auto rightPossibleSums = right[takeRight];
+            sort(rightPossibleSums.begin(), rightPossibleSums.end());
+
+            for (auto leftPossibileSum: left[takeLeft]) {
+                int needSumFromRight = totalSum/2 - leftPossibileSum;
+                auto it = lower_bound(rightPossibleSums.begin(), rightPossibleSums.end(), needSumFromRight);
+                if (it != rightPossibleSums.end()) {
+                    int first = leftPossibileSum + *it;
+                    int second = totalSum - first;
+                    res = min(res, abs(first - second));
+                }
+            }
+        }
+        return res;
+    }
+};
+```
 
 This makes the complexity O\(2^\(n/2\)\) which is also O\(root 2^n\)
 
