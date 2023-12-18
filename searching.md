@@ -57,6 +57,14 @@ do
     // Process permutation
 } while(next_permutation(permutation.begin(), permutation.end()));
 
+/*
+1 2 3
+1 3 2
+2 1 3
+2 3 1
+3 1 2
+3 2 1
+*/
 
 // std implementation of next_permutation
 bool nextPermutation(std::string &s, int n)
