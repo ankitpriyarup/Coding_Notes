@@ -902,35 +902,48 @@ treat it like a matrix and then simply do it. */
 ### [Median of two sorted arrays](https://leetcode.com/problems/median-of-two-sorted-arrays/)
 
 ```cpp
-class Solution {
-public:
-    double solve(const vector<int> &A, const vector<int> &B, int l, int r, int count)
-    {
-        while (l < r)
-        {
-            // using mid = (l+r)/2 can cause TLE in case [0,0,0,0,0] [-1,0,0,0,0,0,1]
-            // because division of negative i.e. (l+r)/2 can act in reverse sense of floor
-            // l + (r-l)/2 on the other hand divides positive r-l which is always positive
-            int mid = l + (r-l)/2;
-            int cnt = (upper_bound(A.begin(), A.end(), mid) - A.begin()) + 
-                (upper_bound(B.begin(), B.end(), mid) - B.begin());
-            if (cnt > count) r = mid;
-            else l = mid+1;
+// We can merge both lists using merge sort merge in O(n + m) time and then
+// find the median. Can be done in O(1) space since we only care about finding median.
+
+// Use two pointer, both initialized at zero and keep incrementing for smaller value
+// until we reach middle position. Time: O(n + m) Space: O(1)
+
+// Using binary search, idea is we find a point in smallest (or equal) array. Such that
+// left part before that point and in larger array we can also find a pos (mathematically)
+// such that right part after pos combine and form the middle part that will give median.
+double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+    if (nums1.size() > nums2.size()) return findMedianSortedArrays(nums2, nums1);
+
+    int l = 0, r = nums1.size();
+    while (l <= r) {
+        int mid = l + (r-l)/2;
+        // Find the partition of the larger array such that the sum of elements on
+        // left side of the partition in both arrays is half of the total elements.
+        int pos = ((nums1.size() + nums2.size() + 1) / 2) - mid;
+
+        int left1 = (mid > 0) ? nums1[mid - 1] : INT_MIN;
+        int right1 = (mid < nums1.size()) ? nums1[mid] : INT_MAX;
+        int left2 = (pos > 0) ? nums2[pos - 1] : INT_MIN;
+        int right2 = (pos < nums2.size()) ? nums2[pos] : INT_MAX;
+
+        // Verify if partition is valid by verifying if the largest number on the
+        // left side is smaller than the smallest number on the right side.
+        if (left1 <= right2 && left2 <= right1) {
+            return ((nums1.size() + nums2.size())&1) ?
+                max(left1, left2) : (double)(max(left1, left2) + min(right1, right2)) / 2;
         }
-        return l;
+        else if (left1 > right2) r = mid - 1;
+        else l = mid + 1;
     }
-    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2)
-    {
-        int n = nums1.size(), m = nums2.size();
-        if (n == 0 && m == 0) return 0;
-        else if (m == 0) return (n&1) ? nums1[n/2] : (nums1[n/2 - 1] + nums1[n/2])/(double)2;
-        else if (n == 0) return (m&1) ? nums2[m/2] : (nums2[m/2 - 1] + nums2[m/2])/(double)2;
-        
-        int l = min(nums1[0], nums2[0]), r = max(nums1.back(), nums2.back());
-        return ((n+m)&1) ? solve(nums1, nums2, l, r, (n+m)/2) :
-            (solve(nums1, nums2, l, r, (n+m)/2 - 1) + solve(nums1, nums2, l, r, (n+m)/2)) / (double)2;
-    }
-};
+
+    /*
+    Example for [1, 2, 3] - [1, 2, 5, 6]
+    l: 0, r: 4      mid: 1, pos: 3          l1: 1, r1: 2, l2: 5, r2: 6      X
+    l: 2, r: 4      mid: 3, pos: 1          l1: 3, r1: ∞, l2: 1, r2: 2      X
+    l: 2, r: 2      mid: 2, pos: 2          l1: 2, r1: 3, l2: 2, r2: 5
+    */
+    return 0;
+}
 ```
 
 ### [Painter's Partition Problem](https://www.interviewbit.com/problems/painters-partition-problem/)
