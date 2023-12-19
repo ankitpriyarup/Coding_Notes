@@ -854,9 +854,20 @@ int strStr(string haystack, string needle)
     return -1;
 }
 
-// KMP Algorithm
-// https://youtu.be/4jY57Ehc14Y
-// lps[i] is length of longest proper prefix of str[0..i] which is also suffix of str[0..i]
+/*
+KMP Algorithm: https://youtu.be/4jY57Ehc14Y
+ONIONIONSPL
+we need to find ONIONS in it
+if we search from index 0 everything except last char will match. We cannot simply increment i to current j pointer because then we
+will miss ONIONS present in overlapping way.
+We need this info that what suffix of previous found string is the prefix of target we are looking for.
+Here lps[i] is length of longest proper prefix of str[0..i] which is also suffix of str[0..i]
+^ By proper prefix we mean we cannot take whole string as it will be suffix too
+In above example ON is the suffix in string ONION so we move pointer to 3 and we will find the target.
+
+we are pre calculating LPS array.
+
+*/
 int strStr(string haystack, string needle)
 {
     if (needle.size() == 0) return 0;
