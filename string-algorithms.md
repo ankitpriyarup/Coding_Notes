@@ -655,8 +655,32 @@ int numberOfDiffSubstrings(vector<int> &lcp, string &s)
 }
 ```
 
-### Longest Common Substring
+### (LCS) Longest Common Substring
+
+https://codeforces.com/edu/course/2/lesson/2/5
+
 ```c++
+/*
+Can be done using DP there will be two states pointer i and pointer j and each transition will be constant checking if pointer are equal or not.
+This will be O(N*M)
+
+
+Idea is for a given s and t string: aabba and baba we append like aabba#baba now create suffix array and lcp array
+a                    2
+a#baba               1
+aabba#baba           1
+aba                  2
+abba#baba            1
+ba                   2
+ba#baba              1
+baba                 2
+bba#baba             1
+
+1/2 represents where the string is comming from 1 means its string s and 2 means its string 2.
+This can be determined is suffix array ith element index is greater than s size
+If both i and i+1 are from same string and lcp (i.e. common between i and i+1 here in code indexing is one minus because 0th element lcp doesn't exist)
+LCP symbolises a potential Longest common substring.
+*/
 string s, t; cin >> s >> t;
 string str = s + '#' + t;
 auto sa = constructSuffixArray(str);
