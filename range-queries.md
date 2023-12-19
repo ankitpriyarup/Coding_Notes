@@ -23,10 +23,12 @@ public:
 };
 ```
 
-
-## Prefix XOR
-
 ## Difference Array
+D[i] = A[i] - A[i-1] and D[0] = A[0]
+
+Now update(l, r, x) : Add x to D[l] and subtract it from D[r+1]
+
+After all queries simply A[0] = D[0], A[i] = A[i-1] + D[i]
 
 ## Sparse Table
 
