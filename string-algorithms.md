@@ -390,7 +390,7 @@ vector<vector<int>> group_identical_strings(vector<string> const& s)
 
 ![](.gitbook/assets/image%20%2863%29%20%281%29.png)
 
-### Number of different substrings in a string \(N^2 log N\)
+### Number of different substrings or Number of unique substring in a string \(N^2 log N\)
 
 ```cpp
 int count_unique_substrings(string const& s)
@@ -421,6 +421,7 @@ int count_unique_substrings(string const& s)
     }
     return cnt;
 }
+// There's a better way using LCP & Suffix Array below.
 ```
 
 ## Rolling Hashes and Bloom Filters
@@ -629,8 +630,24 @@ vector<int> constructLCP(string const& s, vector<int> const& p)     // string s 
 }
 ```
 
-### Count number of different substrings
+### Count number of different substrings or unique substrings
 ```c++
+/*
+Calculate suffix array and LCP array first.
+Example: "ABABBAB"
+SA    String          LCP
+5    AB                0
+0    ABABBAB           2
+2    ABBAB             2
+6    B                 0
+4    BAB               1
+1    BABBAB            3
+3    BBAB              1
+
+A substring is a prefix of a suffix. So problem now is calculate unique prefixes across suffixes.
+For n chars it will be n*(n+1)/2
+There will be LCP[i] duplicates at every suffix level
+*/
 int numberOfDiffSubstrings(vector<int> &lcp, string &s)
 {
     int n = s.size();
