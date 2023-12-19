@@ -124,7 +124,8 @@ signed main()
 ## Fenwick Tree
 
 It is used to calculate prefix sum of an array. It's not as powerful as Segment Tree but it's simpler to implement.  
- In the image, BIT will be stored in array of n+1 length. \(indexing starts with 1 because binary operation used later on will be anomoly for 0\) for each say 3 find 3 & -3 this will flip right most set bit giving the parent from tree.  
+ In the image, BIT will be stored in array of n+1 length. \(indexing starts with 1 because binary operation used later on will be anomoly for 0\) for each say 3 find 3 & -3 this will flip right most set bit so for 3 (11) it gives 2 for 5 (101) it gives 1 (For 2 powered num it gives same number).
+ Adding it to existing i value will give the parent from tree (refer image).
 Now to fill all value say 4 we find 4 = 0 + 2^2 means we go from 0th index to next 4 elements or for 11 = 2^3 + 2^1 + 2^0 from 10-10 ![](res/BIT.png)  
  If we need to find sum from 0 to 5 we first go to value 6 take it here it's 9 then we go to it's parent it's 10 so ans is 19
 
