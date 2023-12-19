@@ -909,6 +909,7 @@ Given an input text of length n and an array of k words, arr\[\], find all occur
 If we iterate over words and perform pattern matching complexity will be O\(nk + m\) with this algo it will be O\(n + m + z\) where z is total number of occurrences of word in the text.
 
 ## Z Algorithm
+Its a 1D numeric array where Z[i] is length of maxium proper prefix of string which is also a prefix starting at i.
 
 ```cpp
 // N^2 version
