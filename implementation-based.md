@@ -448,25 +448,6 @@ double findMedian()
 {
     return sz&1 ? arr[sz/2] : (arr[sz/2 + 1] + arr[sz/2])/2.0;
 }
-
-// O(logN) using 2 heaps
-priority_queue<int> l;
-priority_queue<int, vector<int>, greater<int>> r;
-void addNum(int num)
-{
-    l.push(num);
-    r.push(l.top());
-    l.pop();
-    if (l.size() < r.size())
-    {
-        l.push(r.top());
-        r.pop();
-    }
-}
-double findMedian()
-{
-    return l.size() > r.size() ? l.top() : ((double) l.top() + r.top()) * 0.5;
-}
 ```
 
 * Maintain two heaps i.e. left and right half from middle. We are performing 3 push and 2 pop operations making it total O\(5logN\)
@@ -476,6 +457,7 @@ priority_queue<int> left;
 priority_queue<int, vector<int>, greater<int>> right;
 
 MedianFinder() { }
+// LogN Solution
 /* Think 3 steps: sz(left) == sz(right), sz(left) > sz(right), sz(left) < sz(right) */
 void addNum(int num)
 {
@@ -498,20 +480,27 @@ double findMedian()
 * We can use policy based data structure, both insertion and find takes logN & 3logN time here but there's no overhead of inserting 5 times so this might perform better in some scenerios
 
 ```cpp
-orderedMultiSet st;
-int n = 0;
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+using namespace __gnu_pbds;
+typedef tree<int, null_type, less_equal<int>, rb_tree_tag, tree_order_statistics_node_update> orderedMultiSet;
 
-MedianFinder() { }
-void addNum(int num)
-{
-    st.insert(num);
-    n++;
-}
-double findMedian()
-{
-    return n&1 ? *st.find_by_order(n/2) :
-        (*st.find_by_order(n/2 - 1) + *st.find_by_order(n/2))/2.0;
-}
+class MedianFinder {
+public:
+    orderedMultiSet st;
+    int n = 0;
+
+    MedianFinder() { }
+    void addNum(int num)
+    {
+        st.insert(num);
+        n++;
+    }
+    double findMedian()
+    {
+        return n&1 ? *st.find_by_order(n/2) : (*st.find_by_order(n/2 - 1) + *st.find_by_order(n/2))/2.0;
+    }
+};
 ```
 
 ### [Design HashMap](https://leetcode.com/problems/design-hashmap/)
