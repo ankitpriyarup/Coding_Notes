@@ -501,6 +501,19 @@ public:
         return n&1 ? *st.find_by_order(n/2) : (*st.find_by_order(n/2 - 1) + *st.find_by_order(n/2))/2.0;
     }
 };
+// Regular set uses a BST internally, red black tree uses a red black tree
+// Regular set has this drawback that we cannot do random access, with policy based you can even do that in O(LogN) time
+// order_of_key(k) number of items strictly smaller than k
+// find_by_order(k) kth element from set counting from zero
+
+/*
+A BST is simply whose left node is small and right large. But often BST can end up as skewed (like a linked list)
+Solution is balanced trees like AVL or Red black tree which is a type of balanced tree.
+- A node is either black or red.
+- The root and nil are always black.
+- If a node is red its childrens are black.
+- All path from its nil descendants contains the same number of black nodes.
+*/
 ```
 
 ### [Design HashMap](https://leetcode.com/problems/design-hashmap/)
