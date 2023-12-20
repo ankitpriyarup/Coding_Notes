@@ -117,6 +117,25 @@ int numWays(int n, int k)
     for (int i = 3; i <= n; ++i) dp[i] = (k-1) * (dp[i-1] + dp[i-2]);
     return dp[n];
 }
+
+// Top down
+int numWays(int n, int k) {
+	vector<vector<int>> dp(n, vector<int>(k+1, -1));
+	function<int(int, int)> solve = [&](int cur, int lastColor) -> int {
+	    if (cur == n) return 1;
+	    if (dp[cur][lastColor] != -1) return dp[cur][lastColor];
+	
+	    int res = 0;
+	    for (int color = 1; color <= k; ++color) {
+		if (color == lastColor) continue;
+		res += solve(cur + 1, color);
+		if (cur + 2 <= n) res += solve(cur + 2, color);
+	    }
+	    return dp[cur][lastColor] = res;
+	};
+	
+	return solve(0, 0);
+}
 ```
 
 ### Ugly Number
