@@ -272,13 +272,13 @@ If we access say 2 then it becomes 2 4 3 1 Now if we insert 5, 1 gets removed
 i.e. 5 2 4 3 this get & set function should be in O(1) */
 
 class LRUCache {
-public:
-
+private:
     struct Node { int key, val; Node *prev, *next; };
     unordered_map<int, Node*> rec;
     Node *head, *tail;
     int sz, maxCapacity;
 
+public:
     LRUCache(int capacity)
     {
         head = NULL, tail = NULL;
@@ -335,6 +335,58 @@ public:
             return newHead->val;
         }
         else return -1;
+    }
+};
+```
+
+### [LFU Cache](https://leetcode.com/problems/lfu-cache/submissions/)
+
+```cpp
+class LFUCache {
+private:
+    struct Node { int key, value, freq; list<int>::const_iterator it; };
+    int maxCapacity, minFrequency;
+    unordered_map<int, Node> nodeByKey;
+    unordered_map<int, list<int>> nodeKeysListByFrequency;
+
+public:
+    LFUCache(int capacity): maxCapacity(capacity), minFrequency(0) {}
+    int get(int key) {
+        if (nodeByKey.find(key) == nodeByKey.end()) return -1;
+        Node& node = nodeByKey[key];
+        updateFrequency(node);
+        return node.value;
+    }
+    
+    void put(int key, int value) {
+        if (maxCapacity == 0) return;
+        if (nodeByKey.find(key) != nodeByKey.end()) {
+            Node& node = nodeByKey[key];
+            node.value = value;
+            updateFrequency(node);
+            return;
+        }
+        if (nodeByKey.size() == maxCapacity) {
+            const int requiredKey = nodeKeysListByFrequency[minFrequency].back();
+            nodeKeysListByFrequency[minFrequency].pop_back();
+            nodeByKey.erase(requiredKey);
+        }
+
+        minFrequency = 1;
+        nodeKeysListByFrequency[1].push_front(key);
+        nodeByKey[key] = {key, value, 1, cbegin(nodeKeysListByFrequency[1])};
+    }
+
+private:
+    void updateFrequency(Node& node) {
+        int prevFreq = node.freq, newFreq = ++node.freq;
+        nodeKeysListByFrequency[prevFreq].erase(node.it);
+        if (nodeKeysListByFrequency[prevFreq].empty()) {
+            nodeKeysListByFrequency.erase(prevFreq);
+            if (prevFreq == minFrequency) ++minFrequency;
+        }
+        nodeKeysListByFrequency[newFreq].push_front(node.key);
+        node.it = cbegin(nodeKeysListByFrequency[newFreq]);
     }
 };
 ```
