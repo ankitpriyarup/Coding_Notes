@@ -240,6 +240,36 @@ int numDecodings(string s)
 }
 
 // Variant - II
+// Topdown
+int numDecodings(string s) {
+	const int MOD = 1e9 + 7;
+	vector<int> dp(s.size(), -1);
+	
+	function<long long int(int)> solve = [&](int cur) -> int {
+	    if (cur == s.size()) return 1;
+	    if (dp[cur] != -1) return dp[cur];
+	
+	    bool firstWild = s[cur] == '*';
+	    bool secondWild = cur + 1 < s.size() && s[cur + 1] == '*';
+	
+	    long long int res = 0;
+	    // Taking 1 at a time.
+	    res += firstWild ? 9 * solve(cur + 1) : (s[cur] > '0' ? solve(cur + 1) : 0);
+	    // Taking 2 at a time.
+	    if (cur + 1 < s.size()) {
+		// possibility when ** -> 11 12 13 14 15 16 17 18 19 21 22 23 24 25 26
+		if (firstWild && secondWild) res += 15 * solve(cur + 2);
+		else if (firstWild && !secondWild) res += ((s[cur + 1] <= '6') ? 2 : 1) * solve(cur + 2);
+		else if (!firstWild && secondWild) res += (s[cur] == '0' || s[cur] > '2') ? 0 :
+							  ((s[cur] == '1') ? 9 : 6) * solve(cur + 2);
+		else res += (s[cur] == '1' || (s[cur] == '2' && s[cur + 1] <= '6')) ? solve(cur + 2) : 0;
+	    }
+	    return dp[cur] = (res % MOD);
+	};
+	
+	return solve(0);
+}
+
 // Bottom up
 const int M = 1e9 + 7;
 int numDecodings(string s)
