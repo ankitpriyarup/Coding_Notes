@@ -727,26 +727,29 @@ cout << st.size() << '\n';
 * [https://leetcode.com/problems/russian-doll-envelopes/](https://leetcode.com/problems/russian-doll-envelopes/)
 
 ```cpp
-/* Follow up question do we have to take care of orientation? In that case
-rotate envelopes initially such first w is small h is large always. */
-
-/* N^2 LIS is easy to impliment, To do it in NlogN we require same LIS logic as before */
-int maxEnvelopes(vector<vector<int>>& envelopes)
-{
-    sort(envelopes.begin(), envelopes.end(), [](auto x, auto y)
-    {
-        return (x[0] == y[0]) ? (x[1] > y[1]) : (x[0] < y[0]);
+/* This can be done using LIS. */
+int maxEnvelopes(vector<vector<int>>& envelopes) {
+    // Sort ascending on first and descending on second. Now if we take only second part
+    // It is guaranteed that first part is sorted because for equal we are taking descending order.
+    sort(envelopes.begin(), envelopes.end(), [](auto x, auto y) {
+        return x[0] == y[0] ? x[1] > y[1] : x[0] < y[0];
     });
 
-    vector<vector<int>> lis;
-    auto comp = [](auto x, auto y) { return (x[1] < y[1]) && (x[0] < y[0]); };
-    for (const auto x : envelopes)
-    {
-        auto lb = lower_bound(lis.begin(), lis.end(), x, comp);
-        if (lb == lis.end()) lis.push_back(x);
-        else *lb = x;
+    vector<int> nums;
+    for (auto x: envelopes) nums.push_back(x[1]);
+    int n = nums.size();
+    vector<int> dp(n+1, INT_MAX);
+    dp[0] = INT_MIN;
+    for (int i = 0; i < n; ++i) {
+        int l = upper_bound(dp.begin(), dp.end(), nums[i]) - dp.begin();
+        if (dp[l-1] < nums[i] && nums[i] < dp[l])
+            dp[l] = nums[i];
     }
-    return lis.size();
+    int res = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (dp[i] != INT_MAX) res = i;
+    }
+    return res;
 }
 ```
 
