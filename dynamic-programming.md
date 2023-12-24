@@ -656,37 +656,49 @@ We have rod of length 5 with pieces value: 2, 5, 7, 8 for
 7
 ```
 
-### Longest Increasing Subsequence
+### Longest Increasing Subsequence (LIS)
+
+https://leetcode.com/problems/longest-increasing-subsequence/
 
 ```cpp
-/* [3, 10, 2, 1, 20] = [3, 10, 20] = 3
-[3, 2] = [3] or [2] = 1
-[50, 3, 10, 7, 40, 50] = [3, 7, 40, 50] or [3, 10, 40, 50] = 4 */
-// N squared solution is very easy to have using dp, dp[i] = min of dp[j]+1 where j < i and arr[j] < arr[i]
-
-/* Greedy approach:
-[3, 10, 2, 1, 20]
-itterate and form increasing lists at the end of itteration we will have
-list1: [3, 10, 20] list2: [2, 20] list3: [1, 20] so list1 is the answer.
-
-directly implementing above logic can be costly, there's an observation in it.
-- We only care about the size of list not the actual list.
-- To keep maintaining the list we need to just maintain relative order
-so can we maintain all the lists in one list (denoted using set) ? length of list is the answer
-
-final algo: itterate, if set contain element atleast that then remove it and add the element.
- */
-int lengthOfLIS(vector<int>& nums)
-{
-    set<int> st;
-    for (int x : nums)
-    {
-        auto lb = st.lower_bound(x);
-        if (lb != st.end()) st.erase(lb);
-        st.insert(x);
+// N^2 solution using DP.
+// dp[i] is the longest increasing subsequence ending at i.
+int lengthOfLIS(vector<int>& nums) {
+    int n = nums.size();
+    vector<int> dp(n, 1);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < i; ++j) {
+            if (nums[j] < nums[i])
+                dp[i] = max(dp[i], dp[j] + 1);
+        }
     }
-    for (auto &x : st) cout << x << " ";
-    return st.size();
+    return *max_element(dp.begin(), dp.end());
+}
+
+// Another approach could be.
+// dp[i] now represents smallest element at which an increasing subsequence of length i ends.
+int lengthOfLIS(vector<int>& nums) {
+    int n = nums.size();
+    const int INF = 1e9;
+    vector<int> dp(n+1, INF);
+    dp[0] = -INF;
+    for (int i = 0; i < n; ++i) {
+	// This block can be optimized...
+        for (int l = 1; l <= n; ++l) {
+            if (dp[l-1] < nums[i] && nums[i] < dp[l])
+                dp[l] = nums[i];
+        }
+	// This block can be optimized.
+	// dp array is monotonically increasing, hence optimal l can be found simply by (no need to loop).
+	// int l = upper_bound(dp.begin(), dp.end(), nums[i]) - dp.begin();
+	// Reducing time complexity from N^2 to NlogN
+    }
+
+    int res = 0;
+    for (int l = 1; l <= nums.size(); ++l) {
+        if (dp[l] < INF) res = l;
+    }
+    return res;
 }
 
 /* If the problem was Find Long Increasing Bitonic subsequence,
