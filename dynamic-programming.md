@@ -621,26 +621,27 @@ A(BC) = (30×5×60) + (10×30×60) = 27000 operations.
 2                                    [0, 5x60]
 ```
 
-### Burst Balloon Problem
+### [Burst Balloon Problem](https://leetcode.com/problems/burst-balloons/)
 
-```text
-Given values of balloons: 3 1 5 8
-Each bursting means that value * left * right value
-We need to burst them such that max val: like in
-order-5 1 3 8 (1*5*8 + 3*1*8 + 3*8 + 8 = 96)
-
-Diagonals represents first balloon which we burst. 0 1 means
-balloons within 0 to 1
-    0   1   2   3
-0   3  30  159  167
-1      15  135  159
-2          40   48
-3               40
-
-For [0, 2] value left [0, 1] denotes what if we choose [0, 1] to
-burst first then we will burst 2 so for ever cell it's
-dp[i][j] = max(dp[i][j-1] + arr[j]*arr[j+1], dp[i+1][j] +
-arr[0]*arr[j+1])
+```cpp
+int maxCoins(vector<int>& nums) {
+	nums.insert(nums.begin(), 1);
+	nums.push_back(1);
+	int n = nums.size();
+	vector<vector<int>> dp(n, vector<int>(n, -1));
+	
+	function<int(int, int)> solve = [&](int l, int r) -> int {
+	    if (l > r) return 0;
+	    if (dp[l][r] != -1) return dp[l][r];
+	
+	    int res = 0;
+	    for (int i = l; i <= r; ++i)
+		res = max(res, (nums[l-1] * nums[i] * nums[r + 1]) + solve(l, i - 1) + solve(i + 1, r));
+	    return dp[l][r] = res;
+	};
+	
+	return solve(1, n-2);
+}
 ```
 
 ### Rod Cutting Problem
