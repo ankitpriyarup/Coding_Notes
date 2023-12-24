@@ -790,6 +790,45 @@ int candy(vector<int>& ratings)
     return sm;
 }
 
+// Graph based approach, add a directed edge between two adjacent students if rating is higher.
+// Then simply run a topological sort to get the candy count.
+int candy(vector<int>& ratings) {
+    int n = ratings.size();
+    vector<int> adj[n];
+    vector<int> inDeg(n, 0);
+    for (int i = 1; i < n; ++i) {
+        if (ratings[i-1] > ratings[i]) {
+            adj[i].push_back(i-1);
+            inDeg[i-1]++;
+        }
+        if (ratings[i-1] < ratings[i]) {
+            adj[i-1].push_back(i);
+            inDeg[i]++;
+        }
+    }
+
+    int res = 0;
+    queue<int> q;
+    for (int i = 0; i < n; ++i) {
+        if (inDeg[i] == 0) q.push(i);
+    }
+    int candy = 1;
+    while (!q.empty())
+    {
+        int sz = q.size();
+        while (sz--) {
+            int u = q.front(); q.pop();
+            res += candy;
+            for (int &v : adj[u]) {
+                inDeg[v]--;
+                if (inDeg[v] == 0) q.push(v);
+            }
+        }
+        candy++;
+    }
+    return res;
+}
+
 /* One pass, constant space appraoch
 Observation: Candies are always given increment of 1. Local minimum number of
 candies given to a student is 1 so subdistribution is of form 1, 2, 3, ..., n or
